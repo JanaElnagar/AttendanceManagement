@@ -1,0 +1,9 @@
+﻿using Xunit;
+
+namespace AttendanceManagement.EntityFrameworkCore;
+
+[CollectionDefinition(AttendanceManagementTestConsts.CollectionDefinitionName)]
+public class AttendanceManagementEntityFrameworkCoreCollection : ICollectionFixture<AttendanceManagementEntityFrameworkCoreFixture>
+{
+
+}

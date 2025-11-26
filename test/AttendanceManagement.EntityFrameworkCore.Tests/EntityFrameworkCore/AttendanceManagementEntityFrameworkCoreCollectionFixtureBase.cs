@@ -1,0 +1,9 @@
+﻿using AttendanceManagement.EntityFrameworkCore;
+using Xunit;
+
+namespace AttendanceManagement.EntityFrameworkCore;
+
+public class AttendanceManagementEntityFrameworkCoreCollectionFixtureBase : ICollectionFixture<AttendanceManagementEntityFrameworkCoreFixture>
+{
+
+}

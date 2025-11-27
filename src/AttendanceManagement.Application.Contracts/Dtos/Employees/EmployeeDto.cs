@@ -10,6 +10,8 @@ namespace AttendanceManagement.Dtos.Employees
     public class EmployeeDto : FullAuditedEntityDto<Guid>
     {
         public Guid UserId { get; set; }
+        public string UserName { get; set; }  // from IdentityUser
+        public string Email { get; set; }       // from IdentityUser
         public string Name { get; set; }
         public string Department { get; set; }
         public string Sector { get; set; }

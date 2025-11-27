@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Entities.Auditing;
+using Volo.Abp.Identity;
 
 namespace AttendanceManagement.Data.Employees
 {
@@ -22,6 +23,7 @@ namespace AttendanceManagement.Data.Employees
         public Guid? WorkflowId { get; set; } // Admin assigns workflow based on hierarchy
 
         // Navigation properties
+        public virtual IdentityUser User { get; set; }
         public virtual Group Group { get; set; }
         public virtual Workflow Workflow { get; set; }
         public virtual ICollection<ManagerAssignment> ManagerAssignments { get; set; }

@@ -4,6 +4,7 @@ using AttendanceManagement.Data.Groups;
 using AttendanceManagement.Data.Schedules;
 using AttendanceManagement.Data.Workflows;
 using AttendanceManagement.Enums;
+using AttendanceManagement.Permissions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,6 +15,7 @@ using Volo.Abp.DependencyInjection;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
 using Volo.Abp.Identity;
+using Volo.Abp.PermissionManagement;
 
 namespace AttendanceManagement.Data
 {
@@ -24,6 +26,9 @@ namespace AttendanceManagement.Data
         private readonly IRepository<Schedule, Guid> _scheduleRepository;
         private readonly IRepository<Workflow, Guid> _workflowRepository;
         private readonly IIdentityUserRepository _identityUserRepository;
+        private readonly IdentityUserManager _identityUserManager;
+        private readonly IdentityRoleManager _identityRoleManager;
+        private readonly IPermissionManager _permissionManager;
         private readonly IGuidGenerator _guidGenerator;
 
         // Predefined GUIDs for consistent seeding
@@ -44,6 +49,9 @@ namespace AttendanceManagement.Data
             IRepository<Schedule, Guid> scheduleRepository,
             IRepository<Workflow, Guid> workflowRepository,
             IIdentityUserRepository identityUserRepository,
+            IdentityUserManager identityUserManager,
+            IdentityRoleManager identityRoleManager,
+            IPermissionManager permissionManager,
             IGuidGenerator guidGenerator)
         {
             _employeeRepository = employeeRepository;
@@ -51,6 +59,9 @@ namespace AttendanceManagement.Data
             _scheduleRepository = scheduleRepository;
             _workflowRepository = workflowRepository;
             _identityUserRepository = identityUserRepository;
+            _identityUserManager = identityUserManager;
+            _identityRoleManager = identityRoleManager;
+            _permissionManager = permissionManager;
             _guidGenerator = guidGenerator;
         }
 
@@ -66,8 +77,14 @@ namespace AttendanceManagement.Data
             var adminUser = await _identityUserRepository.FindByNormalizedUserNameAsync("ADMIN");
             _adminUserId = adminUser.Id;
 
+            // Seed Roles and Permissions first
+            await SeedRolesAndPermissionsAsync();
+
             // Seed Identity Users first
             await SeedIdentityUsersAsync();
+
+            // Assign roles to users
+            await AssignRolesToUsersAsync();
 
             // Seed Groups first (before employees)
             var groups = await SeedGroupsAsync();
@@ -134,6 +151,190 @@ namespace AttendanceManagement.Data
                 await _identityUserRepository.InsertAsync(user);
             }
             return user;
+        }
+
+        private async Task SeedRolesAndPermissionsAsync()
+        {
+            // Create roles
+            var adminRole = await GetOrCreateRoleAsync("admin", "Administrator");
+            var hrManagerRole = await GetOrCreateRoleAsync("hrmanager", "HR Manager");
+            var managerRole = await GetOrCreateRoleAsync("manager", "Manager");
+            var doctorRole = await GetOrCreateRoleAsync("doctor", "Doctor");
+            var employeeRole = await GetOrCreateRoleAsync("employee", "Employee");
+
+            // Assign permissions to Admin role (all permissions)
+            await SetRolePermissionsAsync(adminRole.Name, new[]
+            {
+                AttendanceManagementPermissions.Employees.Default,
+                AttendanceManagementPermissions.Employees.Create,
+                AttendanceManagementPermissions.Employees.Edit,
+                AttendanceManagementPermissions.Employees.Delete,
+                AttendanceManagementPermissions.Groups.Default,
+                AttendanceManagementPermissions.Groups.Create,
+                AttendanceManagementPermissions.Groups.Edit,
+                AttendanceManagementPermissions.Groups.Delete,
+                AttendanceManagementPermissions.Groups.ManageMembers,
+                AttendanceManagementPermissions.Schedules.Default,
+                AttendanceManagementPermissions.Schedules.Create,
+                AttendanceManagementPermissions.Schedules.Edit,
+                AttendanceManagementPermissions.Schedules.Delete,
+                AttendanceManagementPermissions.Schedules.Assign,
+                AttendanceManagementPermissions.Schedules.ViewOwn,
+                AttendanceManagementPermissions.Schedules.Export,
+                AttendanceManagementPermissions.Workflows.Default,
+                AttendanceManagementPermissions.Workflows.Create,
+                AttendanceManagementPermissions.Workflows.Edit,
+                AttendanceManagementPermissions.Workflows.Delete,
+                AttendanceManagementPermissions.Workflows.ManageSteps,
+                AttendanceManagementPermissions.ExceptionRequests.Default,
+                AttendanceManagementPermissions.ExceptionRequests.Create,
+                AttendanceManagementPermissions.ExceptionRequests.Edit,
+                AttendanceManagementPermissions.ExceptionRequests.Delete,
+                AttendanceManagementPermissions.ExceptionRequests.ViewOwn,
+                AttendanceManagementPermissions.ExceptionRequests.ViewAll,
+                AttendanceManagementPermissions.ExceptionRequests.Approve,
+                AttendanceManagementPermissions.ExceptionRequests.ApproveAsManager,
+                AttendanceManagementPermissions.ExceptionRequests.ApproveAsHR,
+                AttendanceManagementPermissions.ExceptionRequests.ApproveAsDoctor
+            });
+
+            // Assign permissions to HR Manager role
+            await SetRolePermissionsAsync(hrManagerRole.Name, new[]
+            {
+                AttendanceManagementPermissions.Employees.Default,
+                AttendanceManagementPermissions.Employees.Create,
+                AttendanceManagementPermissions.Employees.Edit,
+                AttendanceManagementPermissions.Groups.Default,
+                AttendanceManagementPermissions.Groups.Create,
+                AttendanceManagementPermissions.Groups.Edit,
+                AttendanceManagementPermissions.Groups.ManageMembers,
+                AttendanceManagementPermissions.Schedules.Default,
+                AttendanceManagementPermissions.Schedules.Create,
+                AttendanceManagementPermissions.Schedules.Edit,
+                AttendanceManagementPermissions.Schedules.Assign,
+                AttendanceManagementPermissions.Schedules.ViewOwn,
+                AttendanceManagementPermissions.Schedules.Export,
+                AttendanceManagementPermissions.Workflows.Default,
+                AttendanceManagementPermissions.Workflows.Create,
+                AttendanceManagementPermissions.Workflows.Edit,
+                AttendanceManagementPermissions.Workflows.ManageSteps,
+                AttendanceManagementPermissions.ExceptionRequests.Default,
+                AttendanceManagementPermissions.ExceptionRequests.ViewAll,
+                AttendanceManagementPermissions.ExceptionRequests.Approve,
+                AttendanceManagementPermissions.ExceptionRequests.ApproveAsHR
+            });
+
+            // Assign permissions to Manager role
+            await SetRolePermissionsAsync(managerRole.Name, new[]
+            {
+                AttendanceManagementPermissions.Schedules.Default,
+                AttendanceManagementPermissions.Schedules.ViewOwn,
+                AttendanceManagementPermissions.ExceptionRequests.Default,
+                AttendanceManagementPermissions.ExceptionRequests.ViewOwn,
+                AttendanceManagementPermissions.ExceptionRequests.Approve,
+                AttendanceManagementPermissions.ExceptionRequests.ApproveAsManager
+            });
+
+            // Assign permissions to Doctor role
+            await SetRolePermissionsAsync(doctorRole.Name, new[]
+            {
+                AttendanceManagementPermissions.ExceptionRequests.Default,
+                AttendanceManagementPermissions.ExceptionRequests.Approve,
+                AttendanceManagementPermissions.ExceptionRequests.ApproveAsDoctor
+            });
+
+            // Assign permissions to Employee role
+            await SetRolePermissionsAsync(employeeRole.Name, new[]
+            {
+                AttendanceManagementPermissions.Schedules.Default,
+                AttendanceManagementPermissions.Schedules.ViewOwn,
+                AttendanceManagementPermissions.ExceptionRequests.Default,
+                AttendanceManagementPermissions.ExceptionRequests.Create,
+                AttendanceManagementPermissions.ExceptionRequests.ViewOwn
+            });
+        }
+
+        private async Task<IdentityRole> GetOrCreateRoleAsync(string roleName, string displayName)
+        {
+            var role = await _identityRoleManager.FindByNameAsync(roleName);
+            if (role == null)
+            {
+                role = new IdentityRole(_guidGenerator.Create(), roleName);
+                await _identityRoleManager.CreateAsync(role);
+            }
+            return role;
+        }
+
+        private async Task SetRolePermissionsAsync(string roleName, string[] permissions)
+        {
+            foreach (var permission in permissions)
+            {
+                await _permissionManager.SetForRoleAsync(roleName, permission, true);
+            }
+        }
+
+        private async Task AssignRolesToUsersAsync()
+        {
+            var adminUser = await _identityUserRepository.FindByNormalizedUserNameAsync("ADMIN");
+            var hrManagerUser = await _identityUserRepository.FindByNormalizedUserNameAsync("HRMANAGER");
+            var manager1User = await _identityUserRepository.FindByNormalizedUserNameAsync("MANAGER1");
+            var manager2User = await _identityUserRepository.FindByNormalizedUserNameAsync("MANAGER2");
+            var doctorUser = await _identityUserRepository.FindByNormalizedUserNameAsync("DOCTOR");
+            var emp1User = await _identityUserRepository.FindByNormalizedUserNameAsync("EMP1");
+            var emp2User = await _identityUserRepository.FindByNormalizedUserNameAsync("EMP2");
+            var emp3User = await _identityUserRepository.FindByNormalizedUserNameAsync("EMP3");
+            var emp4User = await _identityUserRepository.FindByNormalizedUserNameAsync("EMP4");
+            var emp5User = await _identityUserRepository.FindByNormalizedUserNameAsync("EMP5");
+
+            if (adminUser != null)
+            {
+                await _identityUserManager.AddToRoleAsync(adminUser, "admin");
+            }
+
+            if (hrManagerUser != null)
+            {
+                await _identityUserManager.AddToRoleAsync(hrManagerUser, "hrmanager");
+            }
+
+            if (manager1User != null)
+            {
+                await _identityUserManager.AddToRoleAsync(manager1User, "manager");
+            }
+
+            if (manager2User != null)
+            {
+                await _identityUserManager.AddToRoleAsync(manager2User, "manager");
+            }
+
+            if (doctorUser != null)
+            {
+                await _identityUserManager.AddToRoleAsync(doctorUser, "doctor");
+            }
+
+            if (emp1User != null)
+            {
+                await _identityUserManager.AddToRoleAsync(emp1User, "employee");
+            }
+
+            if (emp2User != null)
+            {
+                await _identityUserManager.AddToRoleAsync(emp2User, "employee");
+            }
+
+            if (emp3User != null)
+            {
+                await _identityUserManager.AddToRoleAsync(emp3User, "employee");
+            }
+
+            if (emp4User != null)
+            {
+                await _identityUserManager.AddToRoleAsync(emp4User, "employee");
+            }
+
+            if (emp5User != null)
+            {
+                await _identityUserManager.AddToRoleAsync(emp5User, "employee");
+            }
         }
 
         private async Task<Dictionary<string, Group>> SeedGroupsAsync()
@@ -623,50 +824,71 @@ namespace AttendanceManagement.Data
             // If employees are already seeded, add the steps with actual employee IDs
             if (employees != null && employees.Any())
             {
-                // Junior workflow steps
+                // Junior workflow steps - Add Doctor step first for sick leave, then Manager steps
                 juniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     juniorWorkflow.Id,
                     1,
+                    ApproverType.Doctor,
+                    null // Doctor doesn't need employee ID
+                ));
+                juniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
+                    _guidGenerator.Create(),
+                    juniorWorkflow.Id,
+                    2,
                     ApproverType.Manager,
                     employees["manager1"].Id // Senior/Direct Manager
                 ));
                 juniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     juniorWorkflow.Id,
-                    2,
+                    3,
                     ApproverType.Manager,
                     employees["manager2"].Id // Team Lead
                 ));
                 juniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     juniorWorkflow.Id,
-                    3,
+                    4,
                     ApproverType.HRManager,
                     employees["hrmanager"].Id // Department Lead/HR
                 ));
 
-                // Senior workflow steps
+                // Senior workflow steps - Add Doctor step first for sick leave
                 seniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     seniorWorkflow.Id,
                     1,
+                    ApproverType.Doctor,
+                    null // Doctor doesn't need employee ID
+                ));
+                seniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
+                    _guidGenerator.Create(),
+                    seniorWorkflow.Id,
+                    2,
                     ApproverType.Manager,
                     employees["manager2"].Id // Team Lead
                 ));
                 seniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     seniorWorkflow.Id,
-                    2,
+                    3,
                     ApproverType.HRManager,
                     employees["hrmanager"].Id // Department Lead/HR
                 ));
 
-                // Manager workflow steps
+                // Manager workflow steps - Add Doctor step first for sick leave
                 managerWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     managerWorkflow.Id,
                     1,
+                    ApproverType.Doctor,
+                    null // Doctor doesn't need employee ID
+                ));
+                managerWorkflow.WorkflowSteps.Add(new WorkflowStep(
+                    _guidGenerator.Create(),
+                    managerWorkflow.Id,
+                    2,
                     ApproverType.HRManager,
                     employees["hrmanager"].Id
                 ));
@@ -677,13 +899,13 @@ namespace AttendanceManagement.Data
                 // These will be updated later when we know the employee IDs
                 // For now, add steps with null approver IDs (will be updated after employee creation)
 
-                // Junior workflow placeholder steps
+                // Junior workflow placeholder steps - Add Doctor step first
                 juniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     juniorWorkflow.Id,
                     1,
-                    ApproverType.Manager,
-                    null
+                    ApproverType.Doctor,
+                    null // Doctor doesn't need employee ID
                 ));
                 juniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
@@ -696,31 +918,52 @@ namespace AttendanceManagement.Data
                     _guidGenerator.Create(),
                     juniorWorkflow.Id,
                     3,
+                    ApproverType.Manager,
+                    null
+                ));
+                juniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
+                    _guidGenerator.Create(),
+                    juniorWorkflow.Id,
+                    4,
                     ApproverType.HRManager,
                     null
                 ));
 
-                // Senior workflow placeholder steps
+                // Senior workflow placeholder steps - Add Doctor step first
                 seniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     seniorWorkflow.Id,
                     1,
+                    ApproverType.Doctor,
+                    null // Doctor doesn't need employee ID
+                ));
+                seniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
+                    _guidGenerator.Create(),
+                    seniorWorkflow.Id,
+                    2,
                     ApproverType.Manager,
                     null
                 ));
                 seniorWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     seniorWorkflow.Id,
-                    2,
+                    3,
                     ApproverType.HRManager,
                     null
                 ));
 
-                // Manager workflow placeholder steps
+                // Manager workflow placeholder steps - Add Doctor step first
                 managerWorkflow.WorkflowSteps.Add(new WorkflowStep(
                     _guidGenerator.Create(),
                     managerWorkflow.Id,
                     1,
+                    ApproverType.Doctor,
+                    null // Doctor doesn't need employee ID
+                ));
+                managerWorkflow.WorkflowSteps.Add(new WorkflowStep(
+                    _guidGenerator.Create(),
+                    managerWorkflow.Id,
+                    2,
                     ApproverType.HRManager,
                     null
                 ));
@@ -737,19 +980,40 @@ namespace AttendanceManagement.Data
             Dictionary<string, Employee> employees)
         {
             // Update junior workflow steps
+            // Step 0 = Doctor (skip, no employee ID needed)
+            // Step 1 = Manager 1
+            // Step 2 = Manager 2
+            // Step 3 = HR Manager
             var juniorWorkflow = workflows["junior"];
-            juniorWorkflow.WorkflowSteps.ElementAt(0).ApproverEmployeeId = employees["manager1"].Id;
-            juniorWorkflow.WorkflowSteps.ElementAt(1).ApproverEmployeeId = employees["manager2"].Id;
-            juniorWorkflow.WorkflowSteps.ElementAt(2).ApproverEmployeeId = employees["hrmanager"].Id;
+            var juniorSteps = juniorWorkflow.WorkflowSteps.OrderBy(ws => ws.StepOrder).ToList();
+            if (juniorSteps.Count >= 4)
+            {
+                juniorSteps[1].ApproverEmployeeId = employees["manager1"].Id; // Step 2
+                juniorSteps[2].ApproverEmployeeId = employees["manager2"].Id; // Step 3
+                juniorSteps[3].ApproverEmployeeId = employees["hrmanager"].Id; // Step 4
+            }
 
             // Update senior workflow steps
+            // Step 0 = Doctor (skip, no employee ID needed)
+            // Step 1 = Manager 2
+            // Step 2 = HR Manager
             var seniorWorkflow = workflows["senior"];
-            seniorWorkflow.WorkflowSteps.ElementAt(0).ApproverEmployeeId = employees["manager2"].Id;
-            seniorWorkflow.WorkflowSteps.ElementAt(1).ApproverEmployeeId = employees["hrmanager"].Id;
+            var seniorSteps = seniorWorkflow.WorkflowSteps.OrderBy(ws => ws.StepOrder).ToList();
+            if (seniorSteps.Count >= 3)
+            {
+                seniorSteps[1].ApproverEmployeeId = employees["manager2"].Id; // Step 2
+                seniorSteps[2].ApproverEmployeeId = employees["hrmanager"].Id; // Step 3
+            }
 
             // Update manager workflow steps
+            // Step 0 = Doctor (skip, no employee ID needed)
+            // Step 1 = HR Manager
             var managerWorkflow = workflows["manager"];
-            managerWorkflow.WorkflowSteps.ElementAt(0).ApproverEmployeeId = employees["hrmanager"].Id;
+            var managerSteps = managerWorkflow.WorkflowSteps.OrderBy(ws => ws.StepOrder).ToList();
+            if (managerSteps.Count >= 2)
+            {
+                managerSteps[1].ApproverEmployeeId = employees["hrmanager"].Id; // Step 2
+            }
 
             // Persist the updates
             await _workflowRepository.UpdateAsync(juniorWorkflow);

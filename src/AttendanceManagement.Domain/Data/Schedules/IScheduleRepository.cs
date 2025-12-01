@@ -10,6 +10,6 @@ namespace AttendanceManagement.Data.Schedules
 {
     public interface IScheduleRepository : IRepository<ScheduleAssignment, Guid>
     {
-        public Task<ScheduleAssignment> GetScheduleAssignementByEmployeeId(Guid id);
+        public Task<ScheduleAssignment> GetScheduleAssignmentByEmployeeId(Guid id);
     }
 }

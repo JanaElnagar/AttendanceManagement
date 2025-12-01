@@ -14,7 +14,7 @@ namespace AttendanceManagement.Repositories
 {
     public class ScheduleRepository(IDbContextProvider<AttendanceManagementDbContext> dbContextProvider) : EfCoreRepository<AttendanceManagementDbContext, ScheduleAssignment, Guid>(dbContextProvider), IScheduleRepository
     {
-        public async Task<ScheduleAssignment> GetScheduleAssignementByEmployeeId(Guid id)
+        public async Task<ScheduleAssignment> GetScheduleAssignmentByEmployeeId(Guid id)
         {
             var query = await GetQueryableAsync();
             return query

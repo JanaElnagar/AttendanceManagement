@@ -215,7 +215,8 @@ namespace AttendanceManagement.EntityFrameworkCore
                 b.HasOne(erah => erah.ApproverEmployee)
                     .WithMany()
                     .HasForeignKey(erah => erah.ApproverEmployeeId)
-                    .OnDelete(DeleteBehavior.Restrict);
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .IsRequired(false); // Allow null for external doctors
 
                 b.HasIndex(erah => new { erah.ExceptionRequestId, erah.StepOrder });
             });

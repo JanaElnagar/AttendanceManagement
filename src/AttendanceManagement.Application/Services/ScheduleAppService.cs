@@ -145,7 +145,7 @@ namespace AttendanceManagement.Services
                 _logger.LogDebug("Employee " + employeeId+ " NOT Found");
             }
 
-            var currentAssignment = await _scheduleRepository.GetScheduleAssignementByEmployeeId(employeeId);    
+            var currentAssignment = await _scheduleRepository.GetScheduleAssignmentByEmployeeId(employeeId);    
 
             if (currentAssignment == null)
             {

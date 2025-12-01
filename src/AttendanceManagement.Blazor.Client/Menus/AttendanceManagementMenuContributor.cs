@@ -143,7 +143,7 @@ public class AttendanceManagementMenuContributor : IMenuContributor
         //    ).RequirePermissions(AttendanceManagementPermissions.ExceptionRequests.ViewAll)
         //);
 
-        context.Menu.Items.Insert(0, attendanceMenu);
+        context.Menu.Items.Insert(1, attendanceMenu);
 
         var administration = context.Menu.GetAdministration();
 

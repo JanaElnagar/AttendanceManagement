@@ -193,72 +193,87 @@
         <ModalBody>
             @if (SelectedRequest != null)
             {
-                <Row>
-                    <Column>
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is3">@L["ExceptionDate"]</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is9">@SelectedRequest.ExceptionDate.ToString("yyyy-MM-dd (dddd)")</FieldBody>
-                        </Field>
-                    </Column>
-                    <Column>
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is3">@L["Type"]</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is9">
-                                @if (SelectedRequest.Type == ExceptionRequestType.Sick)
-                                {
-                                    <Badge Color="Color.Danger">@L["Sick"]</Badge>
-                                }
-                                else
-                                {
-                                    <Badge Color="Color.Warning">@L["SpecialCondition"]</Badge>
-                                }
-                            </FieldBody>
-                        </Field>
-                    </Column>
-                    <Column>
-                        <Field Horizontal="true">
-                            <FieldLabel ColumnSize="ColumnSize.Is3">@L["Status"]</FieldLabel>
-                            <FieldBody ColumnSize="ColumnSize.Is9">
-                                @switch (SelectedRequest.Status)
-                                {
-                                    case ExceptionRequestStatus.Pending:
-                                        <Badge Color="Color.Warning">@L["Pending"]</Badge>
-                                        break;
-                                    case ExceptionRequestStatus.Approved:
-                                        <Badge Color="Color.Success">@L["Approved"]</Badge>
-                                        break;
-                                    case ExceptionRequestStatus.Rejected:
-                                        <Badge Color="Color.Danger">@L["Rejected"]</Badge>
-                                        break;
-                                    case ExceptionRequestStatus.Cancelled:
-                                        <Badge Color="Color.Secondary">@L["Cancelled"]</Badge>
-                                        break;
-                                }
-                            </FieldBody>
-                        </Field>
-                    </Column>
-                </Row>
+                <div class="container-fluid">
+                    <Row Margin="Margin.Is4.FromBottom">
+                        <Column ColumnSize="ColumnSize.Is6">
+                            <Field>
+                                <FieldLabel>@L["ExceptionDate"]</FieldLabel>
+                                <FieldBody>
+                                    <p class="mb-0">@SelectedRequest.ExceptionDate.ToString("yyyy-MM-dd (dddd)")</p>
+                                </FieldBody>
+                            </Field>
+                        </Column>
+                        <Column ColumnSize="ColumnSize.Is6">
+                            <Field>
+                                <FieldLabel>@L["Type"]</FieldLabel>
+                                <FieldBody>
+                                    @if (SelectedRequest.Type == ExceptionRequestType.Sick)
+                                    {
+                                        <Badge Color="Color.Danger">@L["Sick"]</Badge>
+                                    }
+                                    else
+                                    {
+                                        <Badge Color="Color.Warning">@L["SpecialCondition"]</Badge>
+                                    }
+                                </FieldBody>
+                            </Field>
+                        </Column>
+                    </Row>
 
-                <Field Horizontal="true">
-                    <FieldLabel ColumnSize="ColumnSize.Is3">@L["Reason"]</FieldLabel>
-                    <FieldBody ColumnSize="ColumnSize.Is9">@SelectedRequest.Reason</FieldBody>
-                </Field>
+                    <Row Margin="Margin.Is4.FromBottom">
+                        <Column ColumnSize="ColumnSize.Is6">
+                            <Field>
+                                <FieldLabel>@L["Status"]</FieldLabel>
+                                <FieldBody>
+                                    @switch (SelectedRequest.Status)
+                                    {
+                                        case ExceptionRequestStatus.Pending:
+                                            <Badge Color="Color.Warning">@L["Pending"]</Badge>
+                                            break;
+                                        case ExceptionRequestStatus.Approved:
+                                            <Badge Color="Color.Success">@L["Approved"]</Badge>
+                                            break;
+                                        case ExceptionRequestStatus.Rejected:
+                                            <Badge Color="Color.Danger">@L["Rejected"]</Badge>
+                                            break;
+                                        case ExceptionRequestStatus.Cancelled:
+                                            <Badge Color="Color.Secondary">@L["Cancelled"]</Badge>
+                                            break;
+                                    }
+                                </FieldBody>
+                            </Field>
+                        </Column>
+                        <Column ColumnSize="ColumnSize.Is6">
+                            <Field>
+                                <FieldLabel>@L["SubmittedOn"]</FieldLabel>
+                                <FieldBody>
+                                    <p class="mb-0">@SelectedRequest.CreationTime.ToString("yyyy-MM-dd HH:mm")</p>
+                                </FieldBody>
+                            </Field>
+                        </Column>
+                    </Row>
 
-                <Field Horizontal="true">
-                    <FieldLabel ColumnSize="ColumnSize.Is3">@L["SubmittedOn"]</FieldLabel>
-                    <FieldBody ColumnSize="ColumnSize.Is9">@SelectedRequest.CreationTime.ToString("yyyy-MM-dd HH:mm")</FieldBody>
-                </Field>
+                    <Row Margin="Margin.Is4.FromBottom">
+                        <Column>
+                            <Field>
+                                <FieldLabel>@L["Reason"]</FieldLabel>
+                                <FieldBody>
+                                    <p class="mb-0">@(string.IsNullOrWhiteSpace(SelectedRequest.Reason) ? "-" : SelectedRequest.Reason)</p>
+                                </FieldBody>
+                            </Field>
+                        </Column>
+                    </Row>
 
                 @if (SelectedRequest.Attachments != null && SelectedRequest.Attachments.Any())
                 {
-                    <Divider />
-                    <h5>@L["Attachments"]</h5>
+                    <Divider Margin="Margin.Is4.FromTop" />
+                    <h5 class="mb-3">@L["Attachments"]</h5>
                     <ListGroup>
                         @foreach (var attachment in SelectedRequest.Attachments)
                         {
                             <ListGroupItem>
-                                <Icon Name="IconName.FileAlt" />
-                                @attachment.FileName
+                                <Icon Name="IconName.FileAlt" Margin="Margin.Is1.FromEnd" />
+                                <span>@attachment.FileName</span>
                                 <Button Color="Color.Link" Size="Size.Small" Float="Float.End" Clicked="@(() => DownloadAttachmentAsync(attachment.Id))">
                                     <Icon Name="IconName.Download" />
                                 </Button>
@@ -269,9 +284,9 @@
 
                 @if (SelectedRequest.ApprovalHistories != null && SelectedRequest.ApprovalHistories.Any())
                 {
-                    <Divider />
-                    <h5>@L["ApprovalHistory"]</h5>
-                    <Table Striped="true">
+                    <Divider Margin="Margin.Is4.FromTop" />
+                    <h5 class="mb-3">@L["ApprovalHistory"]</h5>
+                    <Table Striped="true" Hoverable="true" Responsive="true">
                         <TableHeader>
                             <TableRow>
                                 <TableHeaderCell>@L["Step"]</TableHeaderCell>
@@ -301,13 +316,14 @@
                                                 break;
                                         }
                                     </TableRowCell>
-                                    <TableRowCell>@(history.Notes ?? "-")</TableRowCell>
+                                    <TableRowCell>@(string.IsNullOrWhiteSpace(history.Notes) ? "-" : history.Notes)</TableRowCell>
                                     <TableRowCell>@history.ActionDateTime.ToString("yyyy-MM-dd HH:mm")</TableRowCell>
                                 </TableRow>
                             }
                         </TableBody>
                     </Table>
                 }
+                </div>
             }
         </ModalBody>
         <ModalFooter>

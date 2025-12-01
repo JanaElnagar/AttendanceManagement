@@ -12,7 +12,7 @@ namespace AttendanceManagement.Dtos.ExceptionRequests
     {
         public Guid ExceptionRequestId { get; set; }
         public Guid WorkflowStepId { get; set; }
-        public Guid ApproverEmployeeId { get; set; }
+        public Guid? ApproverEmployeeId { get; set; } // Nullable to support external doctors
         public string ApproverEmployeeName { get; set; }
         public int StepOrder { get; set; }
         public ApprovalAction Action { get; set; }

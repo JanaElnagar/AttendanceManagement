@@ -14,7 +14,7 @@ namespace AttendanceManagement.Data.ExceptionRequests
     {
         public Guid ExceptionRequestId { get; set; }
         public Guid WorkflowStepId { get; set; }
-        public Guid ApproverEmployeeId { get; set; }
+        public Guid? ApproverEmployeeId { get; set; } // Nullable to support external doctors
         public int StepOrder { get; set; }
         public ApprovalAction Action { get; set; }
         public string Notes { get; set; }
@@ -31,7 +31,7 @@ namespace AttendanceManagement.Data.ExceptionRequests
             Guid id,
             Guid exceptionRequestId,
             Guid workflowStepId,
-            Guid approverEmployeeId,
+            Guid? approverEmployeeId, // Nullable to support external doctors
             int stepOrder,
             ApprovalAction action,
             string notes) : base(id)

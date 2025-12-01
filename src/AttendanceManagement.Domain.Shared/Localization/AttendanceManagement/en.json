@@ -106,10 +106,23 @@
     "Workflows": "Workflows",
     "NewWorkflow": "New Workflow",
     "WorkflowSteps": "Workflow Steps",
+    "WorkflowDetails": "Workflow Details",
+    "Steps": "Steps",
+    "AddStep": "Add Step",
+    "StepOrder": "Step Order",
+    "ApproverType": "Approver Type",
+    "ApproverEmployee": "Approver Employee",
+    "NoStepsDefined": "No steps defined yet.",
+    "Manager": "Manager",
+    "HRManager": "HR Manager",
+    "Doctor": "Doctor",
 
     "Groups": "Groups",
     "NewGroup": "New Group",
     "GroupMembers": "Group Members",
+    "GroupDetails": "Group Details",
+    "NoEmployeesInGroup": "No employees in this group.",
+    "EmployeeCount": "Employee Count",
 
     "PrimaryManager": "Primary Manager",
     "CurrentSchedule": "Current Schedule",
@@ -131,7 +144,14 @@
     "CancelRequestConfirmation": "Are you sure you want to cancel this request?",
     "ApproveConfirmationMessage": "Are you sure you want to approve this request?",
     "RejectConfirmationMessage": "Are you sure you want to reject this request?",
+    "NoRecordsFound": "No records found.",
+    "ScheduleDetails": "Schedule Details",
+    "Select": "Select",
 
-    "ErrorLoadingSchedule": "Error loading schedule. Please try again."
+    "ErrorLoadingSchedule": "Error loading schedule. Please try again.",
+    "ExternalUserMessage": "External User. Employee-specific Information is Unavailable.",
+    "EmployeeRecordNotFound": "Employee record not found.",
+    "UserInfo": "User Information",
+    "NotRequired": "Not Required"
   }
 }

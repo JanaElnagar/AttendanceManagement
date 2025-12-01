@@ -31,6 +31,11 @@ namespace AttendanceManagement.Services
             DeletePolicyName = AttendanceManagementPermissions.Groups.Delete;
         }
 
+        protected override async Task<IQueryable<Group>> CreateFilteredQueryAsync(PagedAndSortedResultRequestDto input)
+        {
+            return await Repository.WithDetailsAsync(g => g.Employees);
+        }
+
         public async Task<GroupWithEmployeesDto> GetWithEmployeesAsync(Guid id)
         {
             var queryable = await Repository.WithDetailsAsync(g => g.Employees);
@@ -45,7 +50,7 @@ namespace AttendanceManagement.Services
 
         public async Task<List<GroupDto>> GetActiveGroupsAsync()
         {
-            var queryable = await Repository.GetQueryableAsync();
+            var queryable = await Repository.WithDetailsAsync(g => g.Employees);
             var groups = await queryable
                 .Where(g => g.IsActive)
                 .OrderBy(g => g.Name)

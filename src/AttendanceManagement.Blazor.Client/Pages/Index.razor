@@ -1,87 +1,452 @@
 @page "/"
-@using Volo.Abp.MultiTenancy
+@using AttendanceManagement.Interfaces
+@using AttendanceManagement.Dtos.Schedules
+@using AttendanceManagement.Dtos.ExceptionRequests
+@using AttendanceManagement.Enums
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Microsoft.AspNetCore.Authorization
 @inherits AttendanceManagementComponentBase
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IEmployeeAppService EmployeeAppService
+@inject IScheduleAppService ScheduleAppService
+@inject IExceptionRequestAppService ExceptionRequestAppService
+@inject IUiMessageService MessageService
+@inject IAuthorizationService AuthorizationService
 
 <div class="row mb-3">
-    <div class="col-xl-6 col-12 d-flex">
-        <div class="card h-lg-100 w-100 overflow-hidden">
+    <div class="@GetEmployeeCardClass() d-flex">
+        <div class="card h-lg-100 w-100">
             <div class="card-body">
-                <div class="starting-content">
-                    <h3>Getting Started</h3>
-                    <p class="lead text-muted mb-2">Learn how to create and run
-                        a new web application using the application startup template.</p>
-                    <a href="https://docs.abp.io/en/commercial/latest/getting-started" class="btn btn-brand mb-4" target="_blank">Getting Started</a>
+                <h4 class="mb-3">@GetEmployeeCardTitle()</h4>
+                @if (IsLoading)
+                {
+                    <div class="text-center p-4">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                }
+                else if (CurrentEmployeeDetails != null)
+                {
+                    <p class="h5 mb-1">@CurrentEmployeeDetails.Name</p>
+                    <p class="text-muted mb-3">@CurrentEmployeeDetails.UserId</p>
 
-                    <h4>Web Application Development Tutorial</h4>
-                    <p class="text-muted mb-2">Learn how to build an ABP based web application named Acme.BookStore.</p>
-                    <a href="https://docs.abp.io/en/commercial/latest/tutorials/book-store/part-1?UI=MVC&DB=EF" class="btn btn-primary soft mb-4" target="_blank">Explore Tutorial</a>
+                    <dl class="row mb-0">
+                        <dt class="col-4">@L["Department"]</dt>
+                        <dd class="col-8">@CurrentEmployeeDetails.Department</dd>
 
-                    <h4>Customize Lepton Theme</h4>
-                    <p class="text-muted mb-2">Learn how to customize LeptonX Theme as you wish.</p>
-                    <a href="https://docs.abp.io/en/commercial/latest/themes/lepton/customizing-lepton-theme" class="btn btn-primary soft mb-5 mb-xl-0" target="_blank">Customize Lepton</a>
-                </div>
-                <img class="card-bg-image" src="/images/getting-started/bg-01.png">
+                        <dt class="col-4">@L["Sector"]</dt>
+                        <dd class="col-8">@CurrentEmployeeDetails.Sector</dd>
+
+                        <dt class="col-4">@L["Group"]</dt>
+                        <dd class="col-8">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.GroupName) ? CurrentEmployeeDetails.GroupName : "-")</dd>
+
+                        <dt class="col-4">@L["Workflow"]</dt>
+                        <dd class="col-8">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.WorkflowName) ? CurrentEmployeeDetails.WorkflowName : "-")</dd>
+
+                        <dt class="col-4">@L["PrimaryManager"]</dt>
+                        <dd class="col-8">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.PrimaryManagerName) ? CurrentEmployeeDetails.PrimaryManagerName : "-")</dd>
+
+                        <dt class="col-4">@L["Status"]</dt>
+                        <dd class="col-8">
+                            @if (CurrentEmployeeDetails.IsActive)
+                            {
+                                <Badge Color="Color.Success">@L["Active"]</Badge>
+                            }
+                            else
+                            {
+                                <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
+                            }
+                        </dd>
+                    </dl>
+                }
+                else
+                {
+                    <Alert Color="Color.Info" Visible="true" Class="mt-3">
+                        <AlertDescription>@L["ExternalUserMessage"]</AlertDescription>
+                    </Alert>
+                }
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 d-flex">
-        <div class="row">
-            <div class="col-12 d-flex">
-                <div class="card overflow-hidden">
-                    <div class="card-body pb-0">
-                        <div class="abp-support abp-logo mb-2"></div>
-                        <p class="text-muted mb-2">You can check for similar problems and solutions, or open a new topic to discuss your specific issue.</p>
-                        <a href="https://support.abp.io/QA/Questions" class="btn btn-brand soft" target="_blank">Visit Support</a>
-                        <img class="" src="/images/getting-started/img-support.png">
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 d-flex">
-                <div class="card h-md-100 overflow-hidden">
-                    <div class="card-body pb-0">
-                        <div class="abp-blog abp-logo mb-2"></div>
-                        <p class="text-muted mb-2">You can find content on .NET development, cross-platform, ASP.NET application templates, ABP-related news, and more.</p>
-                        <a href="https://blog.abp.io/abp" class="btn btn-brand soft" target="_blank">Visit Blog</a>
-                        <img style="margin-bottom: -24px;" src="/images/getting-started/img-blog.png">
-                    </div>
+    @if (CurrentEmployeeDetails != null)
+    {
+        <div class="col-xl-8 col-lg-7 col-12 d-flex">
+            <div class="card h-lg-100 w-100">
+                <div class="card-body">
+                    <h4 class="mb-3">@L["MySchedule"]</h4>
+
+                    @if (IsLoading)
+                    {
+                        <div class="text-center p-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else if (UpcomingDays != null && UpcomingDays.Any())
+                    {
+                        @if (!string.IsNullOrEmpty(CurrentScheduleName))
+                        {
+                            <p class="mb-2">
+                                <strong>@L["ScheduleName"]:</strong> @CurrentScheduleName
+                            </p>
+                        }
+                        @if (!string.IsNullOrEmpty(SeatNumber) || !string.IsNullOrEmpty(FloorNumber))
+                        {
+                            <p class="mb-3">
+                                <strong>@L["Seat"]:</strong> @(SeatNumber ?? "-"),
+                                <strong>@L["Floor"]:</strong> @(FloorNumber ?? "-")
+                            </p>
+                        }
+
+                        <Table Striped="true" Responsive="true">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHeaderCell>@L["Date"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["Day"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["WorkLocation"]</TableHeaderCell>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                @foreach (var day in UpcomingDays)
+                                {
+                                    <TableRow>
+                                        <TableRowCell>@day.Date.ToString("yyyy-MM-dd")</TableRowCell>
+                                        <TableRowCell>@day.Date.ToString("dddd")</TableRowCell>
+                                        <TableRowCell>
+                                            @if (day.IsOnSite)
+                                            {
+                                                <Badge Color="Color.Primary">@L["OnSite"]</Badge>
+                                            }
+                                            else
+                                            {
+                                                <Badge Color="Color.Info">@L["Remote"]</Badge>
+                                            }
+                                        </TableRowCell>
+                                    </TableRow>
+                                }
+                            </TableBody>
+                        </Table>
+                    }
+                    else
+                    {
+                        <Alert Color="Color.Info" Visible="true" Class="mt-3">
+                            <AlertDescription>@L["NoScheduleAssigned"]</AlertDescription>
+                        </Alert>
+                    }
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="my-3 text-center">
-        <h3>Let's improve your application!</h3>
-        <p>Here are some links to help you get started:</p>
-    </div>
-
-    <div class="card mt-4 mb-5">
-        <div class="card-body">
-            <div class="row text-center justify-content-md-center">
-                <div class="col-lg-4">
-                    <div class="p-4">
-                        <h5 class="mb-3"><i class="fas fa-book text-secondary d-block my-3 fa-2x"></i> Learn the ABP Framework</h5>
-                        <p>Explore the comprehensive documentation to learn how to build a modern web application.</p>
-                        <a href="https://abp.io/docs/latest?ref=tmpl" target="_blank" class="btn btn-link px-1">See Documents <i class="fas fa-chevron-right"></i></a>
-                    </div>
-                </div>
-                <div class="col-lg-4 border-start">
-                    <div class="p-4">
-                        <h5 class="mb-3"><i class="fas fa-cubes text-secondary d-block my-3 fa-2x"></i> Samples</h5>
-                        <p>See the example projects built with the ABP Framework.</p>
-                        <a href="https://abp.io/docs/latest/samples?ref=tmpl" target="_blank" class="btn btn-link px-1">All samples <i class="fas fa-chevron-right"></i></a>
-                    </div>
-                </div>
-                <div class="col-lg-4 border-start">
-                    <div class="p-4">
-                        <h5 class="mb-3"><i class="fas fa-users text-secondary d-block my-3 fa-2x"></i> ABP Community</h5>
-                        <p>Get involved with a vibrant community and become a contributor.</p>
-                        <a href="https://abp.io/community/" target="_blank" class="btn btn-link px-1">Community <i class="fas fa-chevron-right"></i></a>
-                        <a href="https://abp.io/docs/latest/contribution?ref=tmpl" target="_blank" class="btn btn-link px-1">Contribute <i class="fas fa-chevron-right"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    }
 </div>
+
+<div class="row mt-3">
+    @if (CurrentEmployeeDetails != null)
+    {
+        <div class="col-xl-8 col-12 d-flex">
+            <div class="card h-lg-100 w-100">
+                <div class="card-body">
+                    <h4 class="mb-3">@L["MyExceptionRequests"]</h4>
+
+                    @if (IsLoading)
+                    {
+                        <div class="text-center p-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else if (MyRequests != null && MyRequests.Any())
+                    {
+                        <div class="row mb-3">
+                            <div class="col-6 col-md-3">
+                                <p class="text-muted mb-1">@L["Pending"]</p>
+                                <p class="h5">@PendingCount</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <p class="text-muted mb-1">@L["Approved"]</p>
+                                <p class="h5">@ApprovedCount</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <p class="text-muted mb-1">@L["Rejected"]</p>
+                                <p class="h5">@RejectedCount</p>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <p class="text-muted mb-1">@L["Cancelled"]</p>
+                                <p class="h5">@CancelledCount</p>
+                            </div>
+                        </div>
+
+                        <Table Striped="true" Responsive="true">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHeaderCell>@L["Date"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["Type"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["Reason"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["Status"]</TableHeaderCell>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                @foreach (var req in MyRequests.OrderByDescending(r => r.CreationTime).Take(5))
+                                {
+                                    <TableRow>
+                                        <TableRowCell>@req.ExceptionDate.ToString("yyyy-MM-dd")</TableRowCell>
+                                        <TableRowCell>
+                                            @if (req.Type == ExceptionRequestType.Sick)
+                                            {
+                                                <Badge Color="Color.Danger">@L["Sick"]</Badge>
+                                            }
+                                            else
+                                            {
+                                                <Badge Color="Color.Warning">@L["SpecialCondition"]</Badge>
+                                            }
+                                        </TableRowCell>
+                                        <TableRowCell>
+                                            @if (!string.IsNullOrEmpty(req.Reason))
+                                            {
+                                                @(req.Reason.Length > 40 ? req.Reason.Substring(0, 40) + "..." : req.Reason)
+                                            }
+                                        </TableRowCell>
+                                        <TableRowCell>
+                                            @switch (req.Status)
+                                            {
+                                                case ExceptionRequestStatus.Pending:
+                                                    <Badge Color="Color.Warning">@L["Pending"]</Badge>
+                                                    break;
+                                                case ExceptionRequestStatus.Approved:
+                                                    <Badge Color="Color.Success">@L["Approved"]</Badge>
+                                                    break;
+                                                case ExceptionRequestStatus.Rejected:
+                                                    <Badge Color="Color.Danger">@L["Rejected"]</Badge>
+                                                    break;
+                                                case ExceptionRequestStatus.Cancelled:
+                                                    <Badge Color="Color.Secondary">@L["Cancelled"]</Badge>
+                                                    break;
+                                            }
+                                        </TableRowCell>
+                                    </TableRow>
+                                }
+                            </TableBody>
+                        </Table>
+                    }
+                    else
+                    {
+                        <Alert Color="Color.Info" Visible="true" Class="mt-3">
+                            <AlertDescription>@L["NoRecordsFound"]</AlertDescription>
+                        </Alert>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (CanApprove)
+    {
+        <div class="col-xl-4 col-12 d-flex">
+            <div class="card h-lg-100 w-100">
+                <div class="card-body">
+                    <h4 class="mb-3">@L["PendingApprovals"]</h4>
+
+                    @if (IsLoading)
+                    {
+                        <div class="text-center p-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else if (PendingApprovalsCount == 0)
+                    {
+                        <p class="text-muted mb-0">@L["NoPendingApprovals"]</p>
+                    }
+                    else
+                    {
+                        <p class="display-6 mb-1">@PendingApprovalsCount</p>
+                        <p class="text-muted">@L["PendingApprovals"]</p>
+                        <a href="/pending-approvals" class="btn btn-primary btn-sm">
+                            @L["ViewDetails"]
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private EmployeeWithDetailsDto CurrentEmployeeDetails { get; set; }
+
+    private string CurrentScheduleName { get; set; }
+    private string SeatNumber { get; set; }
+    private string FloorNumber { get; set; }
+
+    private List<UpcomingScheduleDay> UpcomingDays { get; set; } = new();
+
+    private List<ExceptionRequestDto> MyRequests { get; set; } = new();
+    private int PendingCount { get; set; }
+    private int ApprovedCount { get; set; }
+    private int RejectedCount { get; set; }
+    private int CancelledCount { get; set; }
+
+    private int PendingApprovalsCount { get; set; }
+    private bool CanApprove { get; set; }
+
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (!CurrentUser.Id.HasValue)
+            {
+                IsLoading = false;
+                return;
+            }
+
+            await LoadEmployeeAsync();
+            await LoadScheduleSummaryAsync();
+            await LoadRequestsSummaryAsync();
+            await LoadPendingApprovalsSummaryAsync();
+        }
+        catch (Exception ex)
+        {
+            await MessageService.Error($"Error loading dashboard: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadEmployeeAsync()
+    {
+        try
+        {
+            var employees = await EmployeeAppService.GetActiveEmployeesAsync();
+            var currentEmployee = employees?.FirstOrDefault(e => e.UserId == CurrentUser.Id.Value);
+
+            if (currentEmployee != null)
+            {
+                CurrentEmployeeDetails = await EmployeeAppService.GetWithDetailsAsync(currentEmployee.Id);
+            }
+            // If no employee record found (e.g., doctor/external user), CurrentEmployeeDetails remains null
+        }
+        catch
+        {
+            // User might not have permission to view employees or might be external user (doctor)
+            CurrentEmployeeDetails = null;
+        }
+    }
+
+    private async Task LoadScheduleSummaryAsync()
+    {
+        if (CurrentEmployeeDetails == null)
+        {
+            return;
+        }
+
+        var assignment = await ScheduleAppService.GetEmployeeCurrentScheduleAsync(CurrentEmployeeDetails.Id);
+        if (assignment == null)
+        {
+            return;
+        }
+
+        CurrentScheduleName = assignment.ScheduleName;
+        SeatNumber = assignment.SeatNumber;
+        FloorNumber = assignment.FloorNumber;
+
+        var schedule = await ScheduleAppService.GetAsync(assignment.ScheduleId);
+        var days = schedule.ScheduleDays?.ToList() ?? new List<ScheduleDayDto>();
+
+        UpcomingDays.Clear();
+        for (int i = 0; i < 7; i++)
+        {
+            var date = DateTime.Today.AddDays(i);
+            var dayOfWeek = date.DayOfWeek;
+            var dayDef = days.FirstOrDefault(d => d.DayOfWeek == dayOfWeek);
+
+            if (dayDef != null)
+            {
+                UpcomingDays.Add(new UpcomingScheduleDay
+                {
+                    Date = date,
+                    IsOnSite = dayDef.IsOnSite
+                });
+            }
+        }
+    }
+
+    private async Task LoadRequestsSummaryAsync()
+    {
+        try
+        {
+            // Only load requests if user is an employee
+            if (CurrentEmployeeDetails != null)
+            {
+                MyRequests = await ExceptionRequestAppService.GetMyRequestsAsync() ?? new List<ExceptionRequestDto>();
+
+                PendingCount = MyRequests.Count(r => r.Status == ExceptionRequestStatus.Pending);
+                ApprovedCount = MyRequests.Count(r => r.Status == ExceptionRequestStatus.Approved);
+                RejectedCount = MyRequests.Count(r => r.Status == ExceptionRequestStatus.Rejected);
+                CancelledCount = MyRequests.Count(r => r.Status == ExceptionRequestStatus.Cancelled);
+            }
+            else
+            {
+                // External users (doctors) don't have their own requests
+                MyRequests = new List<ExceptionRequestDto>();
+                PendingCount = 0;
+                ApprovedCount = 0;
+                RejectedCount = 0;
+                CancelledCount = 0;
+            }
+        }
+        catch
+        {
+            // User might not have permission or might be external user
+            MyRequests = new List<ExceptionRequestDto>();
+            PendingCount = 0;
+            ApprovedCount = 0;
+            RejectedCount = 0;
+            CancelledCount = 0;
+        }
+    }
+
+    private async Task LoadPendingApprovalsSummaryAsync()
+    {
+        CanApprove = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.ExceptionRequests.Approve);
+        if (!CanApprove)
+        {
+            PendingApprovalsCount = 0;
+            return;
+        }
+
+        try
+        {
+            var pending = await ExceptionRequestAppService.GetPendingApprovalsAsync();
+            PendingApprovalsCount = pending?.Count ?? 0;
+        }
+        catch
+        {
+            PendingApprovalsCount = 0;
+        }
+    }
+
+    private string GetEmployeeCardClass()
+    {
+        return CurrentEmployeeDetails != null ? "col-xl-4 col-lg-5 col-12" : "col-12";
+    }
+
+    private string GetEmployeeCardTitle()
+    {
+        return CurrentEmployeeDetails != null ? L["Employees"] : L["UserInfo"];
+    }
+
+    private class UpcomingScheduleDay
+    {
+        public DateTime Date { get; set; }
+        public bool IsOnSite { get; set; }
+    }
+}
+
+

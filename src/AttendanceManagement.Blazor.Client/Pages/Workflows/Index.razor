@@ -1,0 +1,645 @@
+@page "/workflows"
+@using AttendanceManagement.Interfaces
+@using AttendanceManagement.Permissions
+@using AttendanceManagement.Dtos.Workflows
+@using AttendanceManagement.Dtos.Employees
+@using AttendanceManagement.Enums
+@using Volo.Abp.Application.Dtos
+@using Volo.Abp.AspNetCore.Components.Messages
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(AttendanceManagementPermissions.Workflows.Default)]
+@inject IWorkflowAppService WorkflowAppService
+@inject IEmployeeAppService EmployeeAppService
+@inject IUiMessageService MessageService
+@inject IAuthorizationService AuthorizationService
+@inject IStringLocalizer<AttendanceManagementResource> L
+@inherits AbpComponentBase
+
+<Card>
+    <CardHeader>
+        <Row Class="justify-content-between">
+            <Column ColumnSize="ColumnSize.IsAuto">
+                <h2>@L["Workflows"]</h2>
+            </Column>
+            <Column ColumnSize="ColumnSize.IsAuto">
+                @if (HasCreatePermission)
+                {
+                    <Button Color="Color.Primary" Clicked="OpenCreateModalAsync">
+                        <Icon Name="IconName.Add" /> @L["NewWorkflow"]
+                    </Button>
+                }
+            </Column>
+        </Row>
+    </CardHeader>
+    <CardBody>
+        @if (IsLoading)
+        {
+            <div class="text-center p-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+        else if (WorkflowList != null && WorkflowList.Any())
+        {
+            <Table Striped="true" Hoverable="true" Responsive="true">
+                <TableHeader>
+                    <TableRow>
+                        <TableHeaderCell>@L["Name"]</TableHeaderCell>
+                        <TableHeaderCell>@L["Description"]</TableHeaderCell>
+                        <TableHeaderCell>@L["Steps"]</TableHeaderCell>
+                        <TableHeaderCell>@L["Status"]</TableHeaderCell>
+                        <TableHeaderCell>@L["Actions"]</TableHeaderCell>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    @foreach (var workflow in WorkflowList)
+                    {
+                        <TableRow>
+                            <TableRowCell>
+                                <a href="javascript:void(0)" @onclick="@(() => OpenDetailsModalAsync(workflow.Id))">
+                                    @workflow.Name
+                                </a>
+                            </TableRowCell>
+                            <TableRowCell>@(workflow.Description ?? "-")</TableRowCell>
+                            <TableRowCell>@(workflow.WorkflowSteps?.Count ?? 0)</TableRowCell>
+                            <TableRowCell>
+                                @if (workflow.IsActive)
+                                {
+                                    <Badge Color="Color.Success">@L["Active"]</Badge>
+                                }
+                                else
+                                {
+                                    <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
+                                }
+                            </TableRowCell>
+                            <TableRowCell>
+                                <Dropdown>
+                                    <DropdownToggle Color="Color.Primary" Size="Size.Small">
+                                        @L["Actions"]
+                                    </DropdownToggle>
+                                    <DropdownMenu>
+                                        <DropdownItem Clicked="@(() => OpenDetailsModalAsync(workflow.Id))">
+                                            <Icon Name="IconName.Eye" /> @L["Details"]
+                                        </DropdownItem>
+                                        @if (HasUpdatePermission)
+                                        {
+                                            <DropdownItem Clicked="@(() => OpenEditModalAsync(workflow.Id))">
+                                                <Icon Name="IconName.Edit" /> @L["Edit"]
+                                            </DropdownItem>
+                                            @if (workflow.IsActive)
+                                            {
+                                                <DropdownItem Clicked="@(() => DeactivateWorkflowAsync(workflow.Id))">
+                                                    <Icon Name="IconName.Ban" /> @L["Deactivate"]
+                                                </DropdownItem>
+                                            }
+                                            else
+                                            {
+                                                <DropdownItem Clicked="@(() => ActivateWorkflowAsync(workflow.Id))">
+                                                    <Icon Name="IconName.Check" /> @L["Activate"]
+                                                </DropdownItem>
+                                            }
+                                        }
+                                    </DropdownMenu>
+                                </Dropdown>
+                            </TableRowCell>
+                        </TableRow>
+                    }
+                </TableBody>
+            </Table>
+        }
+        else
+        {
+            <Alert Color="Color.Info" Visible="true">
+                <AlertDescription>@L["NoRecordsFound"]</AlertDescription>
+            </Alert>
+        }
+    </CardBody>
+</Card>
+
+<Modal @ref="WorkflowModal">
+    <ModalContent Centered="true" Size="ModalSize.Large">
+        <Form>
+            <ModalHeader>
+                <ModalTitle>@ModalTitle</ModalTitle>
+                <CloseButton Clicked="CloseWorkflowModalAsync" />
+            </ModalHeader>
+            <ModalBody>
+                @if (EditingWorkflow != null)
+                {
+                    <Field>
+                        <FieldLabel>@L["Name"] *</FieldLabel>
+                        <TextEdit @bind-Text="@EditingWorkflow.Name" Placeholder="Enter workflow name" />
+                    </Field>
+                    <Field>
+                        <FieldLabel>@L["Description"]</FieldLabel>
+                        <MemoEdit @bind-Text="@EditingWorkflow.Description" Rows="3" Placeholder="Enter description" />
+                    </Field>
+
+                    <Divider />
+                    <h5>@L["WorkflowSteps"]</h5>
+
+                    <Button Color="Color.Primary" Size="Size.Small" Clicked="AddStep">
+                        <Icon Name="IconName.Add" /> @L["AddStep"]
+                    </Button>
+
+                    @if (EditingWorkflow.WorkflowSteps != null && EditingWorkflow.WorkflowSteps.Any())
+                    {
+                        <Table Striped="true" Bordered="true" Class="mt-3">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHeaderCell>@L["StepOrder"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["ApproverType"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["ApproverEmployee"]</TableHeaderCell>
+                                    <TableHeaderCell></TableHeaderCell>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                @foreach (var step in EditingWorkflow.WorkflowSteps.OrderBy(s => s.StepOrder).ToList())
+                                {
+                                    <TableRow>
+                                        <TableRowCell>@step.StepOrder</TableRowCell>
+                                        <TableRowCell>
+                                            <Select TValue="ApproverType" 
+                                                    SelectedValue="step.ApproverType"
+                                                    SelectedValueChanged="@((ApproverType type) => OnApproverTypeChanged(step, type))">
+                                                <SelectItem Value="ApproverType.Manager">@L["Manager"]</SelectItem>
+                                                <SelectItem Value="ApproverType.HRManager">@L["HRManager"]</SelectItem>
+                                                <SelectItem Value="ApproverType.Doctor">@L["Doctor"]</SelectItem>
+                                            </Select>
+                                        </TableRowCell>
+                                        <TableRowCell>
+                                            @if (step.ApproverType == ApproverType.Doctor)
+                                            {
+                                                <p class="text-muted mb-0">@L["NotRequired"]</p>
+                                            }
+                                            else
+                                            {
+                                                <Select TValue="Guid?" @bind-SelectedValue="step.ApproverEmployeeId">
+                                                    <SelectItem Value="@((Guid?)null)">-- @L["Select"] --</SelectItem>
+                                                    @if (Employees != null)
+                                                    {
+                                                        @foreach (var emp in Employees)
+                                                        {
+                                                            <SelectItem Value="@emp.Id">@emp.Name</SelectItem>
+                                                        }
+                                                    }
+                                                </Select>
+                                            }
+                                        </TableRowCell>
+                                        <TableRowCell>
+                                            <Button Color="Color.Danger" Size="Size.Small" Clicked="@(() => RemoveStep(step.StepOrder))">
+                                                <Icon Name="IconName.Delete" />
+                                            </Button>
+                                        </TableRowCell>
+                                    </TableRow>
+                                }
+                            </TableBody>
+                        </Table>
+                    }
+                    else
+                    {
+                        <Alert Color="Color.Info" Visible="true" Class="mt-3">
+                            <AlertDescription>@L["NoStepsDefined"]</AlertDescription>
+                        </Alert>
+                    }
+                }
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary" Clicked="CloseWorkflowModalAsync">@L["Cancel"]</Button>
+                <Button Color="Color.Primary" Clicked="SaveWorkflowAsync" Loading="@IsSaving">
+                    @L["Save"]
+                </Button>
+            </ModalFooter>
+        </Form>
+    </ModalContent>
+</Modal>
+
+<Modal @ref="DetailsModal">
+    <ModalContent Centered="true" Size="ModalSize.Large">
+        <ModalHeader>
+            <ModalTitle>@L["WorkflowDetails"]</ModalTitle>
+            <CloseButton Clicked="CloseDetailsModalAsync" />
+        </ModalHeader>
+        <ModalBody>
+            @if (SelectedWorkflow != null)
+            {
+                <Field Horizontal="true">
+                    <FieldLabel ColumnSize="ColumnSize.Is3">@L["Name"]</FieldLabel>
+                    <FieldBody ColumnSize="ColumnSize.Is9">
+                        <Text>@SelectedWorkflow.Name</Text>
+                    </FieldBody>
+                </Field>
+                <Field Horizontal="true">
+                    <FieldLabel ColumnSize="ColumnSize.Is3">@L["Description"]</FieldLabel>
+                    <FieldBody ColumnSize="ColumnSize.Is9">
+                        <Text>@(SelectedWorkflow.Description ?? "-")</Text>
+                    </FieldBody>
+                </Field>
+                <Field Horizontal="true">
+                    <FieldLabel ColumnSize="ColumnSize.Is3">@L["Status"]</FieldLabel>
+                    <FieldBody ColumnSize="ColumnSize.Is9">
+                        @if (SelectedWorkflow.IsActive)
+                        {
+                            <Badge Color="Color.Success">@L["Active"]</Badge>
+                        }
+                        else
+                        {
+                            <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
+                        }
+                    </FieldBody>
+                </Field>
+
+                @if (SelectedWorkflow.WorkflowSteps != null && SelectedWorkflow.WorkflowSteps.Any())
+                {
+                    <Divider />
+                    <h5>@L["WorkflowSteps"]</h5>
+                    <Table Striped="true">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>@L["StepOrder"]</TableHeaderCell>
+                                <TableHeaderCell>@L["ApproverType"]</TableHeaderCell>
+                                <TableHeaderCell>@L["ApproverEmployee"]</TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            @foreach (var step in SelectedWorkflow.WorkflowSteps.OrderBy(s => s.StepOrder))
+                            {
+                                <TableRow>
+                                    <TableRowCell>@step.StepOrder</TableRowCell>
+                                    <TableRowCell>@step.ApproverType.ToString()</TableRowCell>
+                                    <TableRowCell>@(step.ApproverEmployeeName ?? "-")</TableRowCell>
+                                </TableRow>
+                            }
+                        </TableBody>
+                    </Table>
+                }
+            }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="CloseDetailsModalAsync">@L["Close"]</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
+@code {
+    private List<WorkflowDto> WorkflowList { get; set; }
+    private List<EmployeeDto> Employees { get; set; }
+    private bool IsLoading { get; set; } = true;
+    private bool IsSaving { get; set; }
+
+    private Modal WorkflowModal { get; set; }
+    private Modal DetailsModal { get; set; }
+
+    private CreateUpdateWorkflowDto EditingWorkflow { get; set; }
+    private Guid? EditingWorkflowId { get; set; }
+    private WorkflowDto SelectedWorkflow { get; set; }
+    private string ModalTitle { get; set; }
+
+    private bool HasCreatePermission { get; set; }
+    private bool HasUpdatePermission { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await SetPermissionsAsync();
+            await LoadEmployeesAsync();
+            await LoadWorkflowsAsync();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error initializing: {ex.Message}");
+            }
+            catch { }
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task SetPermissionsAsync()
+    {
+        try
+        {
+            HasCreatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Workflows.Create);
+            HasUpdatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Workflows.Edit);
+        }
+        catch
+        {
+            HasCreatePermission = false;
+            HasUpdatePermission = false;
+        }
+    }
+
+    private async Task LoadEmployeesAsync()
+    {
+        try
+        {
+            Employees = await EmployeeAppService.GetActiveEmployeesAsync();
+        }
+        catch
+        {
+            Employees = new List<EmployeeDto>();
+        }
+    }
+
+    private async Task LoadWorkflowsAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            var input = new PagedAndSortedResultRequestDto
+            {
+                SkipCount = 0,
+                MaxResultCount = 1000
+            };
+
+            var result = await WorkflowAppService.GetListAsync(input);
+            WorkflowList = result.Items.ToList();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error loading workflows: {ex.Message}");
+            }
+            catch { }
+            WorkflowList = new List<WorkflowDto>();
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void EnsureStepsInitialized()
+    {
+        if (EditingWorkflow.WorkflowSteps == null)
+        {
+            EditingWorkflow.WorkflowSteps = new List<CreateWorkflowStepDto>();
+        }
+    }
+
+    private async Task OpenCreateModalAsync()
+    {
+        try
+        {
+            EditingWorkflowId = null;
+            EditingWorkflow = new CreateUpdateWorkflowDto
+            {
+                WorkflowSteps = new List<CreateWorkflowStepDto>()
+            };
+            ModalTitle = L["NewWorkflow"];
+            if (WorkflowModal != null)
+            {
+                await WorkflowModal.Show();
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error opening create modal: {ex.Message}");
+            }
+            catch { }
+        }
+    }
+
+    private async Task OpenEditModalAsync(Guid id)
+    {
+        try
+        {
+            EditingWorkflowId = id;
+            var workflow = await WorkflowAppService.GetAsync(id);
+            EditingWorkflow = new CreateUpdateWorkflowDto
+            {
+                Name = workflow.Name,
+                Description = workflow.Description,
+                WorkflowSteps = workflow.WorkflowSteps?
+                    .OrderBy(s => s.StepOrder)
+                    .Select(s => new CreateWorkflowStepDto
+                    {
+                        StepOrder = s.StepOrder,
+                        ApproverType = s.ApproverType,
+                        ApproverEmployeeId = s.ApproverEmployeeId
+                    }).ToList() ?? new List<CreateWorkflowStepDto>()
+            };
+            ModalTitle = L["EditWorkflow"];
+            if (WorkflowModal != null)
+            {
+                await WorkflowModal.Show();
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error loading workflow: {ex.Message}");
+            }
+            catch { }
+        }
+    }
+
+    private async Task OpenDetailsModalAsync(Guid id)
+    {
+        try
+        {
+            SelectedWorkflow = await WorkflowAppService.GetAsync(id);
+            if (DetailsModal != null)
+            {
+                await DetailsModal.Show();
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error loading details: {ex.Message}");
+            }
+            catch { }
+        }
+    }
+
+    private async Task CloseWorkflowModalAsync()
+    {
+        try
+        {
+            if (WorkflowModal != null)
+            {
+                await WorkflowModal.Hide();
+            }
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task CloseDetailsModalAsync()
+    {
+        try
+        {
+            if (DetailsModal != null)
+            {
+                await DetailsModal.Hide();
+            }
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private void AddStep()
+    {
+        if (EditingWorkflow == null) return;
+        EnsureStepsInitialized();
+
+        var nextOrder = EditingWorkflow.WorkflowSteps.Any()
+            ? EditingWorkflow.WorkflowSteps.Max(s => s.StepOrder) + 1
+            : 1;
+
+        EditingWorkflow.WorkflowSteps.Add(new CreateWorkflowStepDto
+        {
+            StepOrder = nextOrder,
+            ApproverType = ApproverType.Manager
+        });
+    }
+
+    private void RemoveStep(int stepOrder)
+    {
+        if (EditingWorkflow?.WorkflowSteps == null) return;
+        var step = EditingWorkflow.WorkflowSteps.FirstOrDefault(s => s.StepOrder == stepOrder);
+        if (step != null)
+        {
+            EditingWorkflow.WorkflowSteps.Remove(step);
+            
+            // Renumber remaining steps to be sequential starting from 1
+            var remainingSteps = EditingWorkflow.WorkflowSteps.OrderBy(s => s.StepOrder).ToList();
+            for (int i = 0; i < remainingSteps.Count; i++)
+            {
+                remainingSteps[i].StepOrder = i + 1;
+            }
+            
+            StateHasChanged();
+        }
+    }
+
+    private void OnApproverTypeChanged(CreateWorkflowStepDto step, ApproverType newType)
+    {
+        step.ApproverType = newType;
+        // Clear ApproverEmployeeId when changing to Doctor (doctors don't have employee records)
+        if (newType == ApproverType.Doctor)
+        {
+            step.ApproverEmployeeId = null;
+        }
+        StateHasChanged();
+    }
+
+    private async Task SaveWorkflowAsync()
+    {
+        try
+        {
+            if (EditingWorkflow == null)
+            {
+                try
+                {
+                    await MessageService.Error("Workflow data is missing.");
+                }
+                catch { }
+                return;
+            }
+
+            IsSaving = true;
+            StateHasChanged();
+
+            if (EditingWorkflowId == null)
+            {
+                await WorkflowAppService.CreateAsync(EditingWorkflow);
+            }
+            else
+            {
+                await WorkflowAppService.UpdateAsync(EditingWorkflowId.Value, EditingWorkflow);
+            }
+
+            await CloseWorkflowModalAsync();
+            await LoadWorkflowsAsync();
+            try
+            {
+                await MessageService.Success(L["SuccessfullySaved"]);
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error saving: {ex.Message}");
+            }
+            catch { }
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ActivateWorkflowAsync(Guid id)
+    {
+        try
+        {
+            if (await MessageService.Confirm(L["ActivateConfirmation"]))
+            {
+                await WorkflowAppService.ActivateAsync(id);
+                await LoadWorkflowsAsync();
+                try
+                {
+                    await MessageService.Success(L["SuccessfullyActivated"]);
+                }
+                catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error: {ex.Message}");
+            }
+            catch { }
+        }
+    }
+
+    private async Task DeactivateWorkflowAsync(Guid id)
+    {
+        try
+        {
+            if (await MessageService.Confirm(L["DeactivateConfirmation"]))
+            {
+                await WorkflowAppService.DeactivateAsync(id);
+                await LoadWorkflowsAsync();
+                try
+                {
+                    await MessageService.Success(L["SuccessfullyDeactivated"]);
+                }
+                catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error: {ex.Message}");
+            }
+            catch { }
+        }
+    }
+}
+
+

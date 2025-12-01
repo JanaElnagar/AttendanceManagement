@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AttendanceManagement.Domain.Shared\AttendanceManagement.Domain.Shared.csproj" />
+    <ProjectReference Include="..\AttendanceManagement.Application.Contracts\AttendanceManagement.Application.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

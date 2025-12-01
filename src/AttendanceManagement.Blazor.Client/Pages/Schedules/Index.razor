@@ -9,122 +9,131 @@
 @inject IUiMessageService MessageService
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
+@inject IJSRuntime JSRuntime
 @inherits AbpComponentBase
 
-<Card>
-    <CardHeader>
-        <Row Class="justify-content-between">
-            <Column ColumnSize="ColumnSize.IsAuto">
-                <h2>@L["Schedules"]</h2>
-            </Column>
-            <Column ColumnSize="ColumnSize.IsAuto">
-                @if (HasCreatePermission)
-                {
-                    <Button Color="Color.Primary" Clicked="OpenCreateModalAsync">
-                        <Icon Name="IconName.Add" /> @L["NewSchedule"]
-                    </Button>
-                }
-            </Column>
-        </Row>
-    </CardHeader>
-    <CardBody>
+<div class="modern-page-wrapper">
+    <div class="glass-card">
+        @* Header Section *@
+        <div class="gradient-header">
+            <div class="gradient-header-content">
+                <Row Class="justify-content-between align-items-center">
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="header-icon-box">
+                                <Icon Name="IconName.CalendarDay" />
+                            </div>
+                            <div>
+                                <Heading Size="HeadingSize.Is3" TextColor="TextColor.White" Margin="Margin.Is0">
+                                    @L["Schedules"]
+                                </Heading>
+                                <p class="text-white-50 mb-0 mt-1 small">@L["ManageWorkSchedules"]</p>
+                            </div>
+                        </div>
+                    </Column>
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex gap-2">
+                            @if (HasExportPermission && ScheduleList != null && ScheduleList.Any())
+                            {
+                                <Button Class="btn-modern" Clicked="ExportToExcelAsync" Loading="@IsExporting">
+                                    <Icon Name="IconName.FileDownload" />
+                                    <span>@L["ExportToExcel"]</span>
+                                </Button>
+                            }
+                            @if (HasCreatePermission)
+                            {
+                                <Button Class="btn-modern" Clicked="OpenCreateModalAsync">
+                                    <Icon Name="IconName.Add" />
+                                    <span>@L["NewSchedule"]</span>
+                                </Button>
+                            }
+                        </div>
+                    </Column>
+                </Row>
+            </div>
+        </div>
+
+        @* Loading State *@
         @if (IsLoading)
         {
-            <div class="text-center p-5">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+            <div class="text-center py-5">
+                <div class="modern-spinner mx-auto mb-3"></div>
+                <p class="text-muted">@L["Loading"]</p>
             </div>
         }
         else if (ScheduleList != null && ScheduleList.Any())
         {
-            <Table Striped="true" Hoverable="true" Responsive="true">
-                <TableHeader>
-                    <TableRow>
-                        <TableHeaderCell>@L["Name"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Description"]</TableHeaderCell>
-                        <TableHeaderCell>@L["OnSiteDays"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Status"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Actions"]</TableHeaderCell>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    @foreach (var schedule in ScheduleList)
-                    {
-                        <TableRow>
-                            <TableRowCell>@schedule.Name</TableRowCell>
-                            <TableRowCell>@schedule.Description</TableRowCell>
-                            <TableRowCell>
-                                @if (schedule.ScheduleDays != null)
-                                {
-                                    @($"{schedule.ScheduleDays.Count(d => d.IsOnSite)}/7")
-                                }
-                            </TableRowCell>
-                            <TableRowCell>
-                                @if (schedule.IsActive)
-                                {
-                                    <Badge Color="Color.Success">@L["Active"]</Badge>
-                                }
-                                else
-                                {
-                                    <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
-                                }
-                            </TableRowCell>
-                            <TableRowCell>
-                                <Button Color="Color.Info" Size="Size.Small" Clicked="@(() => ViewScheduleDetailsAsync(schedule))">
-                                    <Icon Name="IconName.Eye" /> @L["ViewDetails"]
-                                </Button>
-                                @if (HasUpdatePermission)
-                                {
-                                    <Button Color="Color.Primary" Size="Size.Small" Clicked="@(() => OpenEditModalAsync(schedule.Id))">
-                                        <Icon Name="IconName.Edit" /> @L["Edit"]
-                                    </Button>
-                                }
-                            </TableRowCell>
-                        </TableRow>
-                    }
-                </TableBody>
-            </Table>
-
-        @*     @if (TotalPages > 1)
-            {
-                <Row Class="mt-3">
-                    <Column>
-                        <Pagination>
-                            <PaginationItem Disabled="@(CurrentPage == 1)">
-                                <PaginationLink Clicked="@(() => LoadPageAsync(CurrentPage - 1))">
-                                    <Icon Name="IconName.ChevronLeft" />
-                                </PaginationLink>
-                            </PaginationItem>
-
-                            @for (int i = 1; i <= TotalPages; i++)
+            @* Content Section *@
+            <div class="px-4 pb-4">
+                <div class="modern-table-wrapper">
+                    <Table Class="modern-table" Margin="Margin.Is0">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>@L["Name"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Description"]</TableHeaderCell>
+                                <TableHeaderCell>@L["OnSiteDays"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Status"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Actions"]</TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            @foreach (var schedule in ScheduleList)
                             {
-                                var page = i;
-                                <PaginationItem Active="@(CurrentPage == page)">
-                                    <PaginationLink Clicked="@(() => LoadPageAsync(page))">
-                                        @page
-                                    </PaginationLink>
-                                </PaginationItem>
+                                <TableRow>
+                                    <TableRowCell>
+                                        <strong>@schedule.Name</strong>
+                                    </TableRowCell>
+                                    <TableRowCell>@schedule.Description</TableRowCell>
+                                    <TableRowCell>
+                                        @if (schedule.ScheduleDays != null)
+                                        {
+                                            @($"{schedule.ScheduleDays.Count(d => d.IsOnSite)}/7")
+                                        }
+                                    </TableRowCell>
+                                    <TableRowCell>
+                                        @if (schedule.IsActive)
+                                        {
+                                            <Badge Color="Color.Success">@L["Active"]</Badge>
+                                        }
+                                        else
+                                        {
+                                            <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
+                                        }
+                                    </TableRowCell>
+                                    <TableRowCell>
+                                        <Button Color="Color.Info" Size="Size.Small" Clicked="@(() => ViewScheduleDetailsAsync(schedule))">
+                                            <Icon Name="IconName.Eye" /> @L["ViewDetails"]
+                                        </Button>
+                                        @if (HasUpdatePermission)
+                                        {
+                                            <Button Color="Color.Primary" Size="Size.Small" Clicked="@(() => OpenEditModalAsync(schedule.Id))" Margin="Margin.Is1.FromStart">
+                                                <Icon Name="IconName.Edit" /> @L["Edit"]
+                                            </Button>
+                                        }
+                                    </TableRowCell>
+                                </TableRow>
                             }
-
-                            <PaginationItem Disabled="@(CurrentPage == TotalPages)">
-                                <PaginationLink Clicked="@(() => LoadPageAsync(CurrentPage + 1))">
-                                    <Icon Name="IconName.ChevronRight" />
-                                </PaginationLink>
-                            </PaginationItem>
-                        </Pagination>
-                    </Column>
-                </Row>
-            }
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
         }
         else
         {
-            <Alert Color="Color.Info" Visible="true">
-                <AlertDescription>@L["NoRecordsFound"]</AlertDescription>
-            </Alert> *@
+            <div class="p-5">
+                <div class="alert-modern">
+                    <h4 class="alert-modern-heading">
+                        <Icon Name="IconName.InfoCircle" Margin="Margin.Is1.FromEnd" />
+                        @L["NoRecordsFound"]
+                    </h4>
+                    <p class="alert-modern-text mb-0">
+                        @L["NoSchedulesAvailable"]
+                    </p>
+                </div>
+            </div>
         }
-    </CardBody>
-</Card>
+    </div>
+</div>
 
 <Modal @ref="ScheduleModal">
     <ModalContent Centered="true" Size="ModalSize.Large">
@@ -263,6 +272,8 @@
 
     private bool HasCreatePermission { get; set; }
     private bool HasUpdatePermission { get; set; }
+    private bool HasExportPermission { get; set; }
+    private bool IsExporting { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -285,6 +296,7 @@
     {
         HasCreatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Schedules.Create);
         HasUpdatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Schedules.Edit);
+        HasExportPermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Schedules.Export);
     }
 
     private async Task LoadSchedulesAsync()
@@ -431,6 +443,30 @@
         finally
         {
             IsSaving = false;
+        }
+    }
+
+    private async Task ExportToExcelAsync()
+    {
+        try
+        {
+            IsExporting = true;
+            StateHasChanged();
+
+            var fileBytes = await ScheduleAppService.ExportToExcelAsync();
+            var fileName = $"Schedules_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
+
+            await MessageService.Success(L["SuccessfullyExported"]);
+        }
+        catch (Exception ex)
+        {
+            await MessageService.Error(L["ExportError"] + ": " + ex.Message);
+        }
+        finally
+        {
+            IsExporting = false;
+            StateHasChanged();
         }
     }
 }

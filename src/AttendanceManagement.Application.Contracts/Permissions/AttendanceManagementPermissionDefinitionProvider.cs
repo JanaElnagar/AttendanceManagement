@@ -34,6 +34,9 @@ namespace AttendanceManagement.Permissions
             employeePermission.AddChild(
                 AttendanceManagementPermissions.Employees.Delete,
                 L("Permission:Delete"));
+            employeePermission.AddChild(
+                AttendanceManagementPermissions.Employees.Export,
+                L("Permission:Export"));
 
             // Group permissions
             var groupPermission = attendanceGroup.AddPermission(
@@ -51,6 +54,9 @@ namespace AttendanceManagement.Permissions
             groupPermission.AddChild(
                 AttendanceManagementPermissions.Groups.ManageMembers,
                 L("Permission:ManageMembers"));
+            groupPermission.AddChild(
+                AttendanceManagementPermissions.Groups.Export,
+                L("Permission:Export"));
 
             // Schedule permissions
             var schedulePermission = attendanceGroup.AddPermission(
@@ -91,6 +97,9 @@ namespace AttendanceManagement.Permissions
             workflowPermission.AddChild(
                 AttendanceManagementPermissions.Workflows.ManageSteps,
                 L("Permission:ManageSteps"));
+            workflowPermission.AddChild(
+                AttendanceManagementPermissions.Workflows.Export,
+                L("Permission:Export"));
 
             // Exception Request permissions
             var exceptionRequestPermission = attendanceGroup.AddPermission(

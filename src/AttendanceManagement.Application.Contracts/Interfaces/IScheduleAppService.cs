@@ -21,5 +21,6 @@ namespace AttendanceManagement.Interfaces
         Task UpdateScheduleAssignmentAsync(Guid assignmentId, AssignScheduleDto input);
         Task EndScheduleAssignmentAsync(Guid assignmentId, DateTime endDate);
         Task<byte[]> ExportEmployeeScheduleAsync(Guid employeeId);
+        Task<byte[]> ExportToExcelAsync();
     }
 }

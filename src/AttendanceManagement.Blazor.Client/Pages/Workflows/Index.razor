@@ -13,109 +13,147 @@
 @inject IUiMessageService MessageService
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
+@inject IJSRuntime JSRuntime
 @inherits AbpComponentBase
 
-<Card>
-    <CardHeader>
-        <Row Class="justify-content-between">
-            <Column ColumnSize="ColumnSize.IsAuto">
-                <h2>@L["Workflows"]</h2>
-            </Column>
-            <Column ColumnSize="ColumnSize.IsAuto">
-                @if (HasCreatePermission)
-                {
-                    <Button Color="Color.Primary" Clicked="OpenCreateModalAsync">
-                        <Icon Name="IconName.Add" /> @L["NewWorkflow"]
-                    </Button>
-                }
-            </Column>
-        </Row>
-    </CardHeader>
-    <CardBody>
+<div class="modern-page-wrapper">
+    <div class="glass-card">
+        @* Header Section *@
+        <div class="gradient-header">
+            <div class="gradient-header-content">
+                <Row Class="justify-content-between align-items-center">
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="header-icon-box">
+                                <Icon Name="IconName.ListOl" />
+                            </div>
+                            <div>
+                                <Heading Size="HeadingSize.Is3" TextColor="TextColor.White" Margin="Margin.Is0">
+                                    @L["Workflows"]
+                                </Heading>
+                                <p class="text-white-50 mb-0 mt-1 small">@L["ManageWorkflowApprovalProcesses"]</p>
+                            </div>
+                        </div>
+                    </Column>
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex gap-2">
+                            @if (HasExportPermission && WorkflowList != null && WorkflowList.Any())
+                            {
+                                <Button Class="btn-modern" Clicked="ExportToExcelAsync" Loading="@IsExporting">
+                                    <Icon Name="IconName.FileDownload" />
+                                    <span>@L["ExportToExcel"]</span>
+                                </Button>
+                            }
+                            @if (HasCreatePermission)
+                            {
+                                <Button Class="btn-modern" Clicked="OpenCreateModalAsync">
+                                    <Icon Name="IconName.Add" />
+                                    <span>@L["NewWorkflow"]</span>
+                                </Button>
+                            }
+                        </div>
+                    </Column>
+                </Row>
+            </div>
+        </div>
+
+        @* Loading State *@
         @if (IsLoading)
         {
-            <div class="text-center p-5">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+            <div class="text-center py-5">
+                <div class="modern-spinner mx-auto mb-3"></div>
+                <p class="text-muted">@L["Loading"]</p>
             </div>
         }
         else if (WorkflowList != null && WorkflowList.Any())
         {
-            <Table Striped="true" Hoverable="true" Responsive="true">
-                <TableHeader>
-                    <TableRow>
-                        <TableHeaderCell>@L["Name"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Description"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Steps"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Status"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Actions"]</TableHeaderCell>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    @foreach (var workflow in WorkflowList)
-                    {
-                        <TableRow>
-                            <TableRowCell>
-                                <a href="javascript:void(0)" @onclick="@(() => OpenDetailsModalAsync(workflow.Id))">
-                                    @workflow.Name
-                                </a>
-                            </TableRowCell>
-                            <TableRowCell>@(workflow.Description ?? "-")</TableRowCell>
-                            <TableRowCell>@(workflow.WorkflowSteps?.Count ?? 0)</TableRowCell>
-                            <TableRowCell>
-                                @if (workflow.IsActive)
-                                {
-                                    <Badge Color="Color.Success">@L["Active"]</Badge>
-                                }
-                                else
-                                {
-                                    <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
-                                }
-                            </TableRowCell>
-                            <TableRowCell>
-                                <Dropdown>
-                                    <DropdownToggle Color="Color.Primary" Size="Size.Small">
-                                        @L["Actions"]
-                                    </DropdownToggle>
-                                    <DropdownMenu>
-                                        <DropdownItem Clicked="@(() => OpenDetailsModalAsync(workflow.Id))">
-                                            <Icon Name="IconName.Eye" /> @L["Details"]
-                                        </DropdownItem>
-                                        @if (HasUpdatePermission)
+            @* Content Section *@
+            <div class="px-4 pb-4">
+                <div class="modern-table-wrapper">
+                    <Table Class="modern-table" Margin="Margin.Is0">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>@L["Name"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Description"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Steps"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Status"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Actions"]</TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            @foreach (var workflow in WorkflowList)
+                            {
+                                <TableRow>
+                                    <TableRowCell>
+                                        <a href="javascript:void(0)" @onclick="@(() => OpenDetailsModalAsync(workflow.Id))" style="color: var(--ejada-primary); font-weight: 600; text-decoration: none;">
+                                            @workflow.Name
+                                        </a>
+                                    </TableRowCell>
+                                    <TableRowCell>@(workflow.Description ?? "-")</TableRowCell>
+                                    <TableRowCell>@(workflow.WorkflowSteps?.Count ?? 0)</TableRowCell>
+                                    <TableRowCell>
+                                        @if (workflow.IsActive)
                                         {
-                                            <DropdownItem Clicked="@(() => OpenEditModalAsync(workflow.Id))">
-                                                <Icon Name="IconName.Edit" /> @L["Edit"]
-                                            </DropdownItem>
-                                            @if (workflow.IsActive)
-                                            {
-                                                <DropdownItem Clicked="@(() => DeactivateWorkflowAsync(workflow.Id))">
-                                                    <Icon Name="IconName.Ban" /> @L["Deactivate"]
-                                                </DropdownItem>
-                                            }
-                                            else
-                                            {
-                                                <DropdownItem Clicked="@(() => ActivateWorkflowAsync(workflow.Id))">
-                                                    <Icon Name="IconName.Check" /> @L["Activate"]
-                                                </DropdownItem>
-                                            }
+                                            <Badge Color="Color.Success">@L["Active"]</Badge>
                                         }
-                                    </DropdownMenu>
-                                </Dropdown>
-                            </TableRowCell>
-                        </TableRow>
-                    }
-                </TableBody>
-            </Table>
+                                        else
+                                        {
+                                            <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
+                                        }
+                                    </TableRowCell>
+                                    <TableRowCell>
+                                        <Dropdown>
+                                            <DropdownToggle Color="Color.Primary" Size="Size.Small">
+                                                @L["Actions"]
+                                            </DropdownToggle>
+                                            <DropdownMenu>
+                                                <DropdownItem Clicked="@(() => OpenDetailsModalAsync(workflow.Id))">
+                                                    <Icon Name="IconName.Eye" /> @L["Details"]
+                                                </DropdownItem>
+                                                @if (HasUpdatePermission)
+                                                {
+                                                    <DropdownItem Clicked="@(() => OpenEditModalAsync(workflow.Id))">
+                                                        <Icon Name="IconName.Edit" /> @L["Edit"]
+                                                    </DropdownItem>
+                                                    @if (workflow.IsActive)
+                                                    {
+                                                        <DropdownItem Clicked="@(() => DeactivateWorkflowAsync(workflow.Id))">
+                                                            <Icon Name="IconName.Ban" /> @L["Deactivate"]
+                                                        </DropdownItem>
+                                                    }
+                                                    else
+                                                    {
+                                                        <DropdownItem Clicked="@(() => ActivateWorkflowAsync(workflow.Id))">
+                                                            <Icon Name="IconName.Check" /> @L["Activate"]
+                                                        </DropdownItem>
+                                                    }
+                                                }
+                                            </DropdownMenu>
+                                        </Dropdown>
+                                    </TableRowCell>
+                                </TableRow>
+                            }
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
         }
         else
         {
-            <Alert Color="Color.Info" Visible="true">
-                <AlertDescription>@L["NoRecordsFound"]</AlertDescription>
-            </Alert>
+            <div class="p-5">
+                <div class="alert-modern">
+                    <h4 class="alert-modern-heading">
+                        <Icon Name="IconName.InfoCircle" Margin="Margin.Is1.FromEnd" />
+                        @L["NoRecordsFound"]
+                    </h4>
+                    <p class="alert-modern-text mb-0">
+                        @L["NoWorkflowsAvailable"]
+                    </p>
+                </div>
+            </div>
         }
-    </CardBody>
-</Card>
+    </div>
+</div>
 
 <Modal @ref="WorkflowModal">
     <ModalContent Centered="true" Size="ModalSize.Large">
@@ -298,6 +336,8 @@
 
     private bool HasCreatePermission { get; set; }
     private bool HasUpdatePermission { get; set; }
+    private bool HasExportPermission { get; set; }
+    private bool IsExporting { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -327,11 +367,13 @@
         {
             HasCreatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Workflows.Create);
             HasUpdatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Workflows.Edit);
+            HasExportPermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Workflows.Export);
         }
         catch
         {
             HasCreatePermission = false;
             HasUpdatePermission = false;
+            HasExportPermission = false;
         }
     }
 
@@ -638,6 +680,38 @@
                 await MessageService.Error($"Error: {ex.Message}");
             }
             catch { }
+        }
+    }
+
+    private async Task ExportToExcelAsync()
+    {
+        try
+        {
+            IsExporting = true;
+            StateHasChanged();
+
+            var fileBytes = await WorkflowAppService.ExportToExcelAsync();
+            var fileName = $"Workflows_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
+
+            try
+            {
+                await MessageService.Success(L["SuccessfullyExported"]);
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error(L["ExportError"] + ": " + ex.Message);
+            }
+            catch { }
+        }
+        finally
+        {
+            IsExporting = false;
+            StateHasChanged();
         }
     }
 }

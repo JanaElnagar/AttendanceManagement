@@ -15,169 +15,185 @@
 @inject IStringLocalizer<AttendanceManagementResource> L
 @inherits AbpComponentBase
 
-<Card>
-    <CardHeader>
-        <Row Class="justify-content-between">
-            <Column ColumnSize="ColumnSize.IsAuto">
-                <h2>@L["MySchedule"]</h2>
-            </Column>
-            <Column ColumnSize="ColumnSize.IsAuto">
-                @if (HasExportPermission && CurrentSchedule != null)
-                {
-                    <Button Color="Color.Success" Clicked="@ExportScheduleAsync">
-                        <Icon Name="IconName.FileDownload" /> @L["ExportToExcel"]
-                    </Button>
-                }
-            </Column>
-        </Row>
-    </CardHeader>
-    <CardBody>
+<div class="modern-page-wrapper">
+    <div class="glass-card">
+        @* Header Section *@
+        <div class="gradient-header">
+            <div class="gradient-header-content">
+                <Row Class="justify-content-between align-items-center">
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="header-icon-box">
+                                <Icon Name="IconName.Calendar" />
+                            </div>
+                            <div>
+                                <Heading Size="HeadingSize.Is3" TextColor="TextColor.White" Margin="Margin.Is0">
+                                    @L["MySchedule"]
+                                </Heading>
+                                <p class="text-white-50 mb-0 mt-1 small">@L["ViewYourWorkSchedule"]</p>
+                            </div>
+                        </div>
+                    </Column>
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        @if (HasExportPermission && CurrentSchedule != null)
+                        {
+                            <Button Class="btn-modern" Clicked="@ExportScheduleAsync" Loading="@IsExporting">
+                                <Icon Name="IconName.FileDownload" />
+                                <span>@L["ExportToExcel"]</span>
+                            </Button>
+                        }
+                    </Column>
+                </Row>
+            </div>
+        </div>
+
+        @* Loading State *@
         @if (IsLoading)
         {
-            <div class="text-center">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+            <div class="text-center py-5">
+                <div class="modern-spinner mx-auto mb-3"></div>
+                <p class="text-muted">@L["LoadingSchedule"]</p>
             </div>
         }
         else if (CurrentSchedule != null)
         {
-            <Row>
-                <Column>
-                    <Alert Color="Color.Info" Visible="true">
-                        <AlertDescription>
-                            <strong>@L["ScheduleName"]:</strong> @CurrentSchedule.ScheduleName<br />
-                            <strong>@L["SeatNumber"]:</strong> @CurrentSchedule.SeatNumber<br />
-                            <strong>@L["Floor"]:</strong> @CurrentSchedule.FloorNumber
-                        </AlertDescription>
-                    </Alert>
-                </Column>
-            </Row>
+            @* Schedule Information Cards *@
+            <div class="info-cards-grid">
+                <div class="modern-info-card accent-primary">
+                    <div class="card-icon-wrapper" style="color: var(--ejada-primary);">
+                        <Icon Name="IconName.CalendarCheck" />
+                    </div>
+                    <div class="card-label">@L["ScheduleName"]</div>
+                    <div class="card-value">@CurrentSchedule.ScheduleName</div>
+                </div>
 
-            <Row Margin="Margin.Is3.FromTop">
-                <Column>
-                    <h4>@L["WeeklySchedule"]</h4>
+                <div class="modern-info-card accent-info">
+                    <div class="card-icon-wrapper" style="color: #3b82f6;">
+                        <Icon Name="IconName.MapMarkerAlt" />
+                    </div>
+                    <div class="card-label">@L["SeatNumber"]</div>
+                    <div class="card-value">@(CurrentSchedule.SeatNumber ?? "-")</div>
+                </div>
 
-                    @* Calendar View *@
-                    <Row Gutter="(16, 16)">
-                        @foreach (var day in ScheduleDays.OrderBy(d => d.DayOfWeek))
-                        {
-                            var isToday = day.DayOfWeek == DateTime.Now.DayOfWeek;
-                            <Column ColumnSize="ColumnSize.Is12.OnMobile.Is6.OnTablet.Is3.OnDesktop">
-                                <Card Border="@(isToday? Border.Is3.Primary : Border.Is1.Light)"
-                                      Background="@(day.IsOnSite ? Background.Primary : Background.Light)">
-                                    <CardBody TextColor="@(day.IsOnSite? TextColor.White: TextColor.Dark)"
-                                              TextAlignment="TextAlignment.Center">
-                                        <Heading Size="HeadingSize.Is5"
-                                                 TextColor="@(day.IsOnSite ? TextColor.White : TextColor.Dark)">
-                                            @day.DayOfWeek.ToString()
-                                        </Heading>
-                                        @if (isToday)
-                                        {
-                                            <Badge Color="Color.Warning">@L["Today"]</Badge>
-                                        }
-                                        <Divider />
-                                        @if (day.IsOnSite)
-                                        {
-                                            <Icon Name="IconName.Building" IconSize="IconSize.x3" />
-                                            <Paragraph Margin="Margin.Is1.FromTop">
-                                                @L["OnSite"]
-                                            </Paragraph>
-                                            <Small>@CurrentSchedule.SeatNumber</Small>
-                                        }
-                                        else
-                                        {
-                                            <Icon Name="IconName.Home" IconSize="IconSize.x3" />
-                                            <Paragraph Margin="Margin.Is1.FromTop">
-                                                @L["WorkFromHome"]
-                                            </Paragraph>
-                                        }
-                                    </CardBody>
-                                </Card>
-                            </Column>
-                        }
-                    </Row>
+                <div class="modern-info-card accent-warning">
+                    <div class="card-icon-wrapper" style="color: #f59e0b;">
+                        <Icon Name="IconName.Building" />
+                    </div>
+                    <div class="card-label">@L["FloorNumber"]</div>
+                    <div class="card-value">@(CurrentSchedule.FloorNumber ?? "-")</div>
+                </div>
 
-                    @* List View *@
-                    <Divider />
-                    <Table Striped="true" Hoverable="true" Margin="Margin.Is3.FromTop">
-                        <TableHeader ThemeContrast="ThemeContrast.Dark">
+                <div class="modern-info-card accent-success">
+                    <div class="card-icon-wrapper" style="color: #10b981;">
+                        <Icon Name="IconName.Clock" />
+                    </div>
+                    <div class="card-label">@L["EffectiveFrom"]</div>
+                    <div class="card-value">@CurrentSchedule.EffectiveFrom.ToString("MMM dd")</div>
+                </div>
+            </div>
+
+            @* Detailed Schedule Table *@
+            <div class="px-4 pb-4">
+                <div class="section-header">
+                    <div class="section-icon">
+                        <Icon Name="IconName.List" />
+                    </div>
+                    <h3 class="section-title">@L["DetailedView"]</h3>
+                </div>
+
+                <div class="modern-table-wrapper">
+                    <Table Class="modern-table" Margin="Margin.Is0">
+                        <TableHeader>
                             <TableRow>
                                 <TableHeaderCell>@L["Day"]</TableHeaderCell>
                                 <TableHeaderCell>@L["WorkLocation"]</TableHeaderCell>
-                                <TableHeaderCell>@L["Seat"]</TableHeaderCell>
-                                <TableHeaderCell>@L["Floor"]</TableHeaderCell>
+                                <TableHeaderCell>@L["SeatNumber"]</TableHeaderCell>
+                                <TableHeaderCell>@L["FloorNumber"]</TableHeaderCell>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             @foreach (var day in ScheduleDays.OrderBy(d => d.DayOfWeek))
                             {
                                 var isToday = day.DayOfWeek == DateTime.Now.DayOfWeek;
-                                <TableRow Background="@(isToday? Background.Light: Background.Default)">
+                                <TableRow Class="@(isToday ? "today-highlight" : "")">
                                     <TableRowCell>
-                                        <strong>@day.DayOfWeek.ToString()</strong>
-                                        @if (isToday)
+                                        <div class="d-flex align-items-center gap-2">
+                                            <strong>@day.DayOfWeek.ToString()</strong>
+                                            @if (isToday)
+                                            {
+                                                <span class="badge-modern badge-today">
+                                                    <Icon Name="IconName.Star" IconSize="IconSize.Small" />
+                                                    @L["Today"]
+                                                </span>
+                                            }
+                                        </div>
+                                    </TableRowCell>
+                                    <TableRowCell>
+                                        @if (day.IsOnSite)
                                         {
-                                            <Badge Color="Color.Warning" Margin="Margin.Is1.FromStart">@L["Today"]</Badge>
+                                            <span class="badge-modern badge-onsite">
+                                                <Icon Name="IconName.Building" IconSize="IconSize.Small" />
+                                                @L["OnSite"]
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-modern badge-remote">
+                                                <Icon Name="IconName.Home" IconSize="IconSize.Small" />
+                                                @L["Remote"]
+                                            </span>
                                         }
                                     </TableRowCell>
                                     <TableRowCell>
                                         @if (day.IsOnSite)
                                         {
-                                            <Badge Color="Color.Primary">
-                                                <Icon Name="IconName.Building" /> @L["OnSite"]
-                                            </Badge>
+                                            <strong>@CurrentSchedule.SeatNumber</strong>
                                         }
                                         else
                                         {
-                                            <Badge Color="Color.Info">
-                                                <Icon Name="IconName.Home" /> @L["Remote"]
-                                            </Badge>
+                                            <span class="text-muted">-</span>
                                         }
                                     </TableRowCell>
                                     <TableRowCell>
                                         @if (day.IsOnSite)
                                         {
-                                            @CurrentSchedule.SeatNumber
+                                            <strong>@CurrentSchedule.FloorNumber</strong>
                                         }
                                         else
                                         {
-                                            <Text>-</Text>
-                                        }
-                                    </TableRowCell>
-                                    <TableRowCell>
-                                        @if (day.IsOnSite)
-                                        {
-                                            @CurrentSchedule.FloorNumber
-                                        }
-                                        else
-                                        {
-                                            <Text>-</Text>
+                                            <span class="text-muted">-</span>
                                         }
                                     </TableRowCell>
                                 </TableRow>
                             }
                         </TableBody>
                     </Table>
-                </Column>
-            </Row>
+                </div>
+            </div>
         }
         else
         {
-            <Alert Color="Color.Warning" Visible="true">
-                <AlertDescription>
-                    @L["NoScheduleAssigned"]
-                </AlertDescription>
-            </Alert>
+            <div class="p-5">
+                <div class="alert-modern">
+                    <h4 class="alert-modern-heading">
+                        <Icon Name="IconName.InfoCircle" Margin="Margin.Is1.FromEnd" />
+                        @L["NoScheduleAssigned"]
+                    </h4>
+                    <p class="alert-modern-text mb-0">
+                        @L["NoScheduleAssignedMessage"]
+                    </p>
+                </div>
+            </div>
         }
-    </CardBody>
-</Card>
+    </div>
+</div>
 
 @code {
     private ScheduleAssignmentDto CurrentSchedule { get; set; }
     private List<ScheduleDayDto> ScheduleDays { get; set; } = new();
     private bool HasExportPermission { get; set; }
     private bool IsLoading { get; set; } = true;
+    private bool IsExporting { get; set; } = false;
     private Guid? CurrentEmployeeId { get; set; }
     private bool _hasLoaded = false;
 
@@ -211,7 +227,6 @@
                 return;
             }
 
-            // Get all employees and find current user's employee record
             var allEmployees = await EmployeeAppService.GetActiveEmployeesAsync();
             var currentEmployee = allEmployees.FirstOrDefault(e => e.UserId == CurrentUser.Id.Value);
 
@@ -222,13 +237,10 @@
             }
 
             CurrentEmployeeId = currentEmployee.Id;
-
-            // Get current schedule assignment
             CurrentSchedule = await ScheduleAppService.GetEmployeeCurrentScheduleAsync(currentEmployee.Id);
 
             if (CurrentSchedule != null)
             {
-                // Get schedule details with days
                 var schedule = await ScheduleAppService.GetAsync(CurrentSchedule.ScheduleId);
                 ScheduleDays = schedule.ScheduleDays.ToList();
             }
@@ -249,17 +261,23 @@
                 return;
             }
 
-            var fileBytes = await ScheduleAppService.ExportEmployeeScheduleAsync(CurrentEmployeeId.Value);
+            IsExporting = true;
+            StateHasChanged();
 
-            // Download file
-            var fileName = $"MySchedule_{DateTime.Now:yyyyMMdd}.xlsx";
+            var fileBytes = await ScheduleAppService.ExportEmployeeScheduleAsync(CurrentEmployeeId.Value);
+            var fileName = $"MySchedule_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
 
             await MessageService.Success(L["SuccessfullyExported"]);
         }
         catch (Exception ex)
         {
-            await MessageService.Error(ex.Message);
+            await MessageService.Error(L["ExportError"] + ": " + ex.Message);
+        }
+        finally
+        {
+            IsExporting = false;
+            StateHasChanged();
         }
     }
 }

@@ -118,12 +118,6 @@ namespace AttendanceManagement.Services
         {
             await CheckPolicyAsync(AttendanceManagementPermissions.ExceptionRequests.Create);
 
-            // Validate exception date is not in the future
-            if (input.ExceptionDate > DateTime.Today)
-            {
-                throw new UserFriendlyException("Exception date cannot be in the future.");
-            }
-
             // Get current employee
             var employee = await _employeeRepository
                 .FirstOrDefaultAsync(e => e.UserId == _currentUser.Id.Value);

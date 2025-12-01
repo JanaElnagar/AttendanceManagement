@@ -7,10 +7,12 @@ using AttendanceManagement.Dtos.Schedules;
 using AttendanceManagement.Interfaces;
 using AttendanceManagement.Permissions;
 using AutoMapper.Internal.Mappers;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -290,6 +292,66 @@ namespace AttendanceManagement.Services
 
             await Repository.UpdateAsync(employee);
             return ObjectMapper.Map<Employee, EmployeeDto>(employee);
+        }
+
+        public async Task<byte[]> ExportToExcelAsync()
+        {
+            await CheckPolicyAsync(AttendanceManagementPermissions.Employees.Export);
+
+            var queryable = await Repository.WithDetailsAsync(e => e.User, e => e.Group, e => e.Workflow);
+            var employees = await queryable
+                .OrderBy(e => e.Name)
+                .ToListAsync();
+
+            using (var workbook = new XLWorkbook())
+            {
+                var worksheet = workbook.Worksheets.Add("Employees");
+
+                // Title
+                worksheet.Cell(1, 1).Value = "Employees List";
+                worksheet.Cell(1, 1).Style.Font.FontSize = 16;
+                worksheet.Cell(1, 1).Style.Font.Bold = true;
+                worksheet.Range(1, 1, 1, 7).Merge();
+
+                // Headers
+                var headerRow = 3;
+                worksheet.Cell(headerRow, 1).Value = "Name";
+                worksheet.Cell(headerRow, 2).Value = "Department";
+                worksheet.Cell(headerRow, 3).Value = "Sector";
+                worksheet.Cell(headerRow, 4).Value = "Group";
+                worksheet.Cell(headerRow, 5).Value = "Workflow";
+                worksheet.Cell(headerRow, 6).Value = "Status";
+                worksheet.Cell(headerRow, 7).Value = "User ID";
+
+                // Style headers
+                var headerRange = worksheet.Range(headerRow, 1, headerRow, 7);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.LightGray;
+                headerRange.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                // Data
+                int row = headerRow + 1;
+                foreach (var employee in employees)
+                {
+                    worksheet.Cell(row, 1).Value = employee.Name;
+                    worksheet.Cell(row, 2).Value = employee.Department ?? "-";
+                    worksheet.Cell(row, 3).Value = employee.Sector ?? "-";
+                    worksheet.Cell(row, 4).Value = employee.Group?.Name ?? "-";
+                    worksheet.Cell(row, 5).Value = employee.Workflow?.Name ?? "-";
+                    worksheet.Cell(row, 6).Value = employee.IsActive ? "Active" : "Inactive";
+                    worksheet.Cell(row, 7).Value = employee.UserId.ToString();
+                    row++;
+                }
+
+                // Auto-fit columns
+                worksheet.Columns().AdjustToContents();
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    return stream.ToArray();
+                }
+            }
         }
     }
 }

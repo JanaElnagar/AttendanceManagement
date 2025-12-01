@@ -1,0 +1,422 @@
+﻿/* ============================================
+   MODERN SCHEDULE PAGE STYLES
+   ============================================ */
+
+/* Subtle page background */
+.modern-page-wrapper {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+/* Clean card design */
+.glass-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+    .glass-card:hover {
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+/* Clean gradient header */
+.gradient-header {
+    background: linear-gradient(135deg, var(--ejada-primary) 0%, #1e3a8a 100%);
+    padding: 2rem;
+}
+
+.gradient-header-content {
+    position: relative;
+    z-index: 1;
+}
+
+.header-icon-box {
+    width: 56px;
+    height: 56px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+}
+
+.header-icon-box * {
+    color: white !important;
+}
+
+/* Info cards grid */
+.info-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    padding: 2rem;
+}
+
+.modern-info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.75rem;
+    transition: all 0.2s ease;
+    border: 2px solid #f1f5f9;
+    border-top: 3px solid var(--card-accent);
+}
+
+    .modern-info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        border-color: var(--card-accent);
+    }
+
+    .modern-info-card.accent-primary {
+        --card-accent: var(--ejada-primary);
+    }
+
+    .modern-info-card.accent-info {
+        --card-accent: #3b82f6;
+    }
+
+    .modern-info-card.accent-warning {
+        --card-accent: #f59e0b;
+    }
+
+    .modern-info-card.accent-success {
+        --card-accent: #10b981;
+    }
+
+.card-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    font-size: 28px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+}
+
+.card-label {
+    font-size: 0.813rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+}
+
+/* Modern table styling */
+.modern-table-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+}
+
+.modern-table {
+    margin-bottom: 0;
+}
+
+    .modern-table thead {
+        background: linear-gradient(135deg, var(--ejada-primary) 0%, #1e3a8a 100%);
+    }
+
+        .modern-table thead th {
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.813rem;
+            letter-spacing: 0.5px;
+            padding: 1rem 1.5rem;
+            border: none;
+        }
+
+    .modern-table tbody tr {
+        transition: background 0.15s ease;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+        .modern-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .modern-table tbody tr.today-highlight {
+            background: #fef3c7;
+        }
+
+    .modern-table tbody td {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        color: #475569;
+        font-size: 0.938rem;
+    }
+
+/* Modern badges */
+.badge-modern {
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.813rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+    .badge-modern.badge-onsite {
+        background: var(--ejada-primary);
+        color: white;
+    }
+
+    .badge-modern.badge-remote {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .badge-modern.badge-today {
+        background: #f59e0b;
+        color: white;
+    }
+
+/* Modern button styles */
+.btn-modern {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.938rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+    .btn-modern:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        color: white;
+    }
+
+/* Section headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.section-icon {
+    width: 42px;
+    height: 42px;
+    background: var(--ejada-primary);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+}
+
+/* Loading spinner */
+.modern-spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid #e2e8f0;
+    border-top-color: var(--ejada-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Alert styling */
+.alert-modern {
+    border: none;
+    border-radius: 12px;
+    padding: 1.25rem;
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+}
+
+.alert-modern-heading {
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #92400e;
+    margin-bottom: 0.5rem;
+}
+
+.alert-modern-text {
+    color: #78350f;
+    font-size: 0.938rem;
+}
+
+/* ============================================
+   DASHBOARD PAGE STYLES
+   ============================================ */
+
+/* Dashboard card base */
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.2s ease;
+    border: 1px solid #f1f5f9;
+    overflow: hidden;
+    height: 100%;
+}
+
+    .dashboard-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+.dashboard-card-header {
+    background: #f8fafc;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.dashboard-card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.dashboard-card-body {
+    padding: 1.5rem;
+}
+
+/* Stats grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--ejada-primary);
+}
+
+/* Employee info card */
+.employee-info-item {
+    display: flex;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+    .employee-info-item:last-child {
+        border-bottom: none;
+    }
+
+.employee-info-label {
+    font-weight: 600;
+    color: #64748b;
+    min-width: 150px;
+    font-size: 0.875rem;
+}
+
+.employee-info-value {
+    color: #1e293b;
+    font-weight: 500;
+}
+
+/* Pending approvals card */
+.approvals-highlight {
+    text-align: center;
+    padding: 2rem;
+    background: #eff6ff;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    border: 2px solid #bfdbfe;
+}
+
+.approvals-count {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--ejada-primary);
+    line-height: 1;
+    margin-bottom: 0.5rem;
+}
+
+.approvals-label {
+    font-size: 0.938rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .modern-page-wrapper {
+        padding: 1rem;
+    }
+
+    .info-cards-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .gradient-header {
+        padding: 1.5rem;
+    }
+}
+
+
+.table thead th {
+    color: white !important
+}
+
+.btn {
+    --bs-btn-color: #ffffff !important
+}

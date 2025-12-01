@@ -164,6 +164,30 @@
     "ScheduleAssignedSuccessfully": "تم تعيين الجدول بنجاح.",
     "ScheduleAssignmentUpdatedSuccessfully": "تم تحديث تعيين الجدول بنجاح.",
     "ScheduleAssignmentEndedSuccessfully": "تم إنهاء تعيين الجدول بنجاح.",
-    "EndScheduleAssignmentConfirmation": "هل أنت متأكد من إنهاء تعيين الجدول هذا؟"
+    "EndScheduleAssignmentConfirmation": "هل أنت متأكد من إنهاء تعيين الجدول هذا؟",
+    "LoadingSchedule": "جاري تحميل الجدول...",
+    "DetailedView": "عرض تفصيلي",
+    "RemoteWork": "العمل عن بُعد",
+    "NoScheduleAssignedMessage": "ليس لديك تعيين جدول نشط. يرجى الاتصال بمسؤولك.",
+    "ExportError": "خطأ في تصدير الجدول",
+    "FloorNumber": "رقم الطابق",
+    
+    "Loading": "جاري التحميل...",
+    "ManageWorkflowApprovalProcesses": "إدارة عمليات الموافقة على سير العمل",
+    "NoWorkflowsAvailable": "لا توجد سير عمل متاحة.",
+    "EditWorkflow": "تعديل سير العمل",
+    "ManageWorkSchedules": "إدارة جداول العمل",
+    "NoSchedulesAvailable": "لا توجد جداول متاحة.",
+    "EditSchedule": "تعديل الجدول",
+    "ManageEmployeeInformation": "إدارة معلومات الموظفين",
+    "NoEmployeesAvailable": "لا يوجد موظفون متاحون.",
+    "ManageEmployeeGroups": "إدارة مجموعات الموظفين",
+    "NoGroupsAvailable": "لا توجد مجموعات متاحة.",
+    "EditGroup": "تعديل المجموعة",
+    "ViewAndManageYourExceptionRequests": "عرض وإدارة طلبات الاستثناء الخاصة بك",
+    "NoExceptionRequestsAvailable": "لا توجد طلبات استثناء متاحة.",
+    "ReviewAndApproveExceptionRequests": "مراجعة والموافقة على طلبات الاستثناء",
+    "NoPendingApprovalsMessage": "تمت معالجة جميع الطلبات.",
+    "ViewYourWorkSchedule": "عرض جدول عملك"
   }
 }

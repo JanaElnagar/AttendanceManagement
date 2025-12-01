@@ -13,286 +13,417 @@
 @inject IUiMessageService MessageService
 @inject IAuthorizationService AuthorizationService
 
-<div class="row mb-3">
-    <div class="@GetEmployeeCardClass() d-flex">
-        <div class="card h-lg-100 w-100">
-            <div class="card-body">
-                <h4 class="mb-3">@GetEmployeeCardTitle()</h4>
-                @if (IsLoading)
-                {
-                    <div class="text-center p-4">
-                        <div class="spinner-border" role="status">
-                            <span class="visually-hidden">Loading...</span>
+<div class="container-fluid py-4">
+    @* First Row: Employee Info & Schedule *@
+    <div class="row g-4 mb-4">
+        @* Employee Information Card *@
+        <div class="@GetEmployeeCardClass()">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h4 class="dashboard-card-title">
+                        <Icon Name="IconName.User" />
+                        @GetEmployeeCardTitle()
+                    </h4>
+                </div>
+                <div class="dashboard-card-body">
+                    @if (IsLoading)
+                    {
+                        <div class="text-center py-4">
+                            <div class="modern-spinner mx-auto"></div>
                         </div>
-                    </div>
-                }
-                else if (CurrentEmployeeDetails != null)
-                {
-                    <p class="h5 mb-1">@CurrentEmployeeDetails.Name</p>
-                    <p class="text-muted mb-3">@CurrentEmployeeDetails.UserId</p>
+                    }
+                    else if (CurrentEmployeeDetails != null)
+                    {
+                        <div class="text-center mb-4">
+                            <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-10 rounded-circle mb-3" style="width: 70px; height: 70px;">
+                                <Icon Name="IconName.User" IconSize="IconSize.x2" Color="Color.Primary" />
+                            </div>
+                            <h5 class="mb-1 fw-bold">@CurrentEmployeeDetails.Name</h5>
+                            <p class="text-muted small mb-0">@CurrentEmployeeDetails.UserId</p>
+                        </div>
 
-                    <dl class="row mb-0">
-                        <dt class="col-4">@L["Department"]</dt>
-                        <dd class="col-8">@CurrentEmployeeDetails.Department</dd>
+                        <div class="employee-info-item">
+                            <div class="employee-info-label">
+                                <Icon Name="IconName.Briefcase" Margin="Margin.Is1.FromEnd" />
+                                @L["Department"]
+                            </div>
+                            <div class="employee-info-value">@CurrentEmployeeDetails.Department</div>
+                        </div>
 
-                        <dt class="col-4">@L["Sector"]</dt>
-                        <dd class="col-8">@CurrentEmployeeDetails.Sector</dd>
+                        <div class="employee-info-item">
+                            <div class="employee-info-label">
+                                <Icon Name="IconName.Building" Margin="Margin.Is1.FromEnd" />
+                                @L["Sector"]
+                            </div>
+                            <div class="employee-info-value">@CurrentEmployeeDetails.Sector</div>
+                        </div>
 
-                        <dt class="col-4">@L["Group"]</dt>
-                        <dd class="col-8">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.GroupName) ? CurrentEmployeeDetails.GroupName : "-")</dd>
+                        <div class="employee-info-item">
+                            <div class="employee-info-label">
+                                <Icon Name="IconName.Users" Margin="Margin.Is1.FromEnd" />
+                                @L["Group"]
+                            </div>
+                            <div class="employee-info-value">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.GroupName) ? CurrentEmployeeDetails.GroupName : "-")</div>
+                        </div>
 
-                        <dt class="col-4">@L["Workflow"]</dt>
-                        <dd class="col-8">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.WorkflowName) ? CurrentEmployeeDetails.WorkflowName : "-")</dd>
+                        <div class="employee-info-item">
+                            <div class="employee-info-label">
+                                <Icon Name="IconName.Briefcase" Margin="Margin.Is1.FromEnd" />
+                                @L["Workflow"]
+                            </div>
+                            <div class="employee-info-value">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.WorkflowName) ? CurrentEmployeeDetails.WorkflowName : "-")</div>
+                        </div>
 
-                        <dt class="col-4">@L["PrimaryManager"]</dt>
-                        <dd class="col-8">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.PrimaryManagerName) ? CurrentEmployeeDetails.PrimaryManagerName : "-")</dd>
+                        <div class="employee-info-item">
+                            <div class="employee-info-label">
+                                <Icon Name="IconName.UserTie" Margin="Margin.Is1.FromEnd" />
+                                @L["PrimaryManager"]
+                            </div>
+                            <div class="employee-info-value">@(!string.IsNullOrEmpty(CurrentEmployeeDetails.PrimaryManagerName) ? CurrentEmployeeDetails.PrimaryManagerName : "-")</div>
+                        </div>
 
-                        <dt class="col-4">@L["Status"]</dt>
-                        <dd class="col-8">
-                            @if (CurrentEmployeeDetails.IsActive)
-                            {
-                                <Badge Color="Color.Success">@L["Active"]</Badge>
-                            }
-                            else
-                            {
-                                <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
-                            }
-                        </dd>
-                    </dl>
-                }
-                else
-                {
-                    <Alert Color="Color.Info" Visible="true" Class="mt-3">
-                        <AlertDescription>@L["ExternalUserMessage"]</AlertDescription>
-                    </Alert>
-                }
+                        <div class="employee-info-item">
+                            <div class="employee-info-label">
+                                <Icon Name="IconName.CheckCircle" Margin="Margin.Is1.FromEnd" />
+                                @L["Status"]
+                            </div>
+                            <div class="employee-info-value">
+                                @if (CurrentEmployeeDetails.IsActive)
+                                {
+                                    <Badge Color="Color.Success">
+                                        <Icon Name="IconName.Check" />
+                                        @L["Active"]
+                                    </Badge>
+                                }
+                                else
+                                {
+                                    <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
+                                }
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert-modern">
+                            <h5 class="alert-modern-heading">
+                                <Icon Name="IconName.InfoCircle" />
+                                @L["ExternalUser"]
+                            </h5>
+                            <p class="alert-modern-text mb-0">@L["ExternalUserMessage"]</p>
+                        </div>
+                    }
+                </div>
             </div>
         </div>
+
+        @* My Schedule Card *@
+        @if (CurrentEmployeeDetails != null)
+        {
+            <div class="col-xl-8 col-lg-7 col-12">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h4 class="dashboard-card-title">
+                            <Icon Name="IconName.Calendar" />
+                            @L["MySchedule"]
+                        </h4>
+                    </div>
+                    <div class="dashboard-card-body">
+                        @if (IsLoading)
+                        {
+                            <div class="text-center py-4">
+                                <div class="modern-spinner mx-auto"></div>
+                            </div>
+                        }
+                        else if (UpcomingDays != null && UpcomingDays.Any())
+                        {
+                            @if (!string.IsNullOrEmpty(CurrentScheduleName))
+                            {
+                                <div class="d-flex align-items-center gap-3 mb-3 p-3 rounded" style="background: #eff6ff; border-left: 4px solid var(--ejada-primary);">
+                                    <Icon Name="IconName.CalendarCheck" IconSize="IconSize.Large" Color="Color.Primary" />
+                                    <div>
+                                        <div class="fw-semibold text-muted small mb-1">@L["ScheduleName"]</div>
+                                        <div class="fs-5 fw-bold text-dark">@CurrentScheduleName</div>
+                                    </div>
+                                </div>
+                            }
+
+                            @if (!string.IsNullOrEmpty(SeatNumber) || !string.IsNullOrEmpty(FloorNumber))
+                            {
+                                <div class="d-flex gap-3 mb-4">
+                                    <div class="flex-fill p-3 rounded" style="background: #f8fafc; border-left: 3px solid #3b82f6;">
+                                        <div class="small text-muted mb-1">
+                                            <Icon Name="IconName.MapMarkerAlt" />
+                                            @L["Seat"]
+                                        </div>
+                                        <div class="fw-bold">@(SeatNumber ?? "-")</div>
+                                    </div>
+                                    <div class="flex-fill p-3 rounded" style="background: #f8fafc; border-left: 3px solid #f59e0b;">
+                                        <div class="small text-muted mb-1">
+                                            <Icon Name="IconName.Building" />
+                                            @L["Floor"]
+                                        </div>
+                                        <div class="fw-bold">@(FloorNumber ?? "-")</div>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="modern-table-wrapper">
+                                <Table Class="modern-table" Margin="Margin.Is0">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHeaderCell>@L["Date"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["Day"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["WorkLocation"]</TableHeaderCell>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        @foreach (var day in UpcomingDays)
+                                        {
+                                            var isToday = day.Date.Date == DateTime.Today;
+                                            <TableRow Class="@(isToday ? "today-highlight" : "")">
+                                                <TableRowCell>
+                                                    <strong>@day.Date.ToString("yyyy-MM-dd")</strong>
+                                                </TableRowCell>
+                                                <TableRowCell>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        @day.Date.ToString("dddd")
+                                                        @if (isToday)
+                                                        {
+                                                            <span class="badge-modern badge-today">
+                                                                <Icon Name="IconName.Star" IconSize="IconSize.Small" />
+                                                                @L["Today"]
+                                                            </span>
+                                                        }
+                                                    </div>
+                                                </TableRowCell>
+                                                <TableRowCell>
+                                                    @if (day.IsOnSite)
+                                                    {
+                                                        <span class="badge-modern badge-onsite">
+                                                            <Icon Name="IconName.Building" IconSize="IconSize.Small" />
+                                                            @L["OnSite"]
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge-modern badge-remote">
+                                                            <Icon Name="IconName.Home" IconSize="IconSize.Small" />
+                                                            @L["Remote"]
+                                                        </span>
+                                                    }
+                                                </TableRowCell>
+                                            </TableRow>
+                                        }
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert-modern">
+                                <p class="alert-modern-text mb-0">@L["NoScheduleAssigned"]</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 
-    @if (CurrentEmployeeDetails != null)
-    {
-        <div class="col-xl-8 col-lg-7 col-12 d-flex">
-            <div class="card h-lg-100 w-100">
-                <div class="card-body">
-                    <h4 class="mb-3">@L["MySchedule"]</h4>
-
-                    @if (IsLoading)
-                    {
-                        <div class="text-center p-4">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    }
-                    else if (UpcomingDays != null && UpcomingDays.Any())
-                    {
-                        @if (!string.IsNullOrEmpty(CurrentScheduleName))
+    @* Second Row: Exception Requests & Pending Approvals *@
+    <div class="row g-4">
+        @* My Exception Requests Card *@
+        @if (CurrentEmployeeDetails != null)
+        {
+            <div class="col-xl-8 col-12">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h4 class="dashboard-card-title">
+                            <Icon Name="IconName.FileAlt" />
+                            @L["MyExceptionRequests"]
+                        </h4>
+                    </div>
+                    <div class="dashboard-card-body">
+                        @if (IsLoading)
                         {
-                            <p class="mb-2">
-                                <strong>@L["ScheduleName"]:</strong> @CurrentScheduleName
-                            </p>
+                            <div class="text-center py-4">
+                                <div class="modern-spinner mx-auto"></div>
+                            </div>
                         }
-                        @if (!string.IsNullOrEmpty(SeatNumber) || !string.IsNullOrEmpty(FloorNumber))
+                        else if (MyRequests != null && MyRequests.Any())
                         {
-                            <p class="mb-3">
-                                <strong>@L["Seat"]:</strong> @(SeatNumber ?? "-"),
-                                <strong>@L["Floor"]:</strong> @(FloorNumber ?? "-")
-                            </p>
+                            <div class="stats-grid mb-4">
+                                <div class="stat-item">
+                                    <div class="stat-label">
+                                        <Icon Name="IconName.Clock" />
+                                        @L["Pending"]
+                                    </div>
+                                    <div class="stat-value" style="color: #f59e0b;">@PendingCount</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">
+                                        <Icon Name="IconName.CheckCircle" />
+                                        @L["Approved"]
+                                    </div>
+                                    <div class="stat-value" style="color: #10b981;">@ApprovedCount</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">
+                                        <Icon Name="IconName.TimesCircle" />
+                                        @L["Rejected"]
+                                    </div>
+                                    <div class="stat-value" style="color: #ef4444;">@RejectedCount</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">
+                                        <Icon Name="IconName.Ban" />
+                                        @L["Cancelled"]
+                                    </div>
+                                    <div class="stat-value" style="color: #6b7280;">@CancelledCount</div>
+                                </div>
+                            </div>
+
+                            <div class="modern-table-wrapper">
+                                <Table Class="modern-table" Margin="Margin.Is0">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHeaderCell>@L["Date"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["Type"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["Reason"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["Status"]</TableHeaderCell>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        @foreach (var req in MyRequests.OrderByDescending(r => r.CreationTime).Take(5))
+                                        {
+                                            <TableRow>
+                                                <TableRowCell>
+                                                    <strong>@req.ExceptionDate.ToString("yyyy-MM-dd")</strong>
+                                                </TableRowCell>
+                                                <TableRowCell>
+                                                    @if (req.Type == ExceptionRequestType.Sick)
+                                                    {
+                                                        <Badge Color="Color.Danger">
+                                                            <Icon Name="IconName.ClinicMedical" />
+                                                            @L["Sick"]
+                                                        </Badge>
+                                                    }
+                                                    else
+                                                    {
+                                                        <Badge Color="Color.Warning">
+                                                            <Icon Name="IconName.ExclamationTriangle" />
+                                                            @L["SpecialCondition"]
+                                                        </Badge>
+                                                    }
+                                                </TableRowCell>
+                                                <TableRowCell>
+                                                    @if (!string.IsNullOrEmpty(req.Reason))
+                                                    {
+                                                        <span>@(req.Reason.Length > 40 ? req.Reason.Substring(0, 40) + "..." : req.Reason)</span>
+                                                    }
+                                                </TableRowCell>
+                                                <TableRowCell>
+                                                    @switch (req.Status)
+                                                    {
+                                                        case ExceptionRequestStatus.Pending:
+                                                            <Badge Color="Color.Warning">
+                                                                <Icon Name="IconName.Clock" />
+                                                                @L["Pending"]
+                                                            </Badge>
+                                                            break;
+                                                        case ExceptionRequestStatus.Approved:
+                                                            <Badge Color="Color.Success">
+                                                                <Icon Name="IconName.Check" />
+                                                                @L["Approved"]
+                                                            </Badge>
+                                                            break;
+                                                        case ExceptionRequestStatus.Rejected:
+                                                            <Badge Color="Color.Danger">
+                                                                <Icon Name="IconName.Times" />
+                                                                @L["Rejected"]
+                                                            </Badge>
+                                                            break;
+                                                        case ExceptionRequestStatus.Cancelled:
+                                                            <Badge Color="Color.Secondary">
+                                                                <Icon Name="IconName.Ban" />
+                                                                @L["Cancelled"]
+                                                            </Badge>
+                                                            break;
+                                                    }
+                                                </TableRowCell>
+                                            </TableRow>
+                                        }
+                                    </TableBody>
+                                </Table>
+                            </div>
                         }
-
-                        <Table Striped="true" Responsive="true">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHeaderCell>@L["Date"]</TableHeaderCell>
-                                    <TableHeaderCell>@L["Day"]</TableHeaderCell>
-                                    <TableHeaderCell>@L["WorkLocation"]</TableHeaderCell>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                @foreach (var day in UpcomingDays)
-                                {
-                                    <TableRow>
-                                        <TableRowCell>@day.Date.ToString("yyyy-MM-dd")</TableRowCell>
-                                        <TableRowCell>@day.Date.ToString("dddd")</TableRowCell>
-                                        <TableRowCell>
-                                            @if (day.IsOnSite)
-                                            {
-                                                <Badge Color="Color.Primary">@L["OnSite"]</Badge>
-                                            }
-                                            else
-                                            {
-                                                <Badge Color="Color.Info">@L["Remote"]</Badge>
-                                            }
-                                        </TableRowCell>
-                                    </TableRow>
-                                }
-                            </TableBody>
-                        </Table>
-                    }
-                    else
-                    {
-                        <Alert Color="Color.Info" Visible="true" Class="mt-3">
-                            <AlertDescription>@L["NoScheduleAssigned"]</AlertDescription>
-                        </Alert>
-                    }
+                        else
+                        {
+                            <div class="alert-modern">
+                                <p class="alert-modern-text mb-0">@L["NoRecordsFound"]</p>
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
-    }
-</div>
+        }
 
-<div class="row mt-3">
-    @if (CurrentEmployeeDetails != null)
-    {
-        <div class="col-xl-8 col-12 d-flex">
-            <div class="card h-lg-100 w-100">
-                <div class="card-body">
-                    <h4 class="mb-3">@L["MyExceptionRequests"]</h4>
-
-                    @if (IsLoading)
-                    {
-                        <div class="text-center p-4">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Loading...</span>
+        @* Pending Approvals Card *@
+        @if (CanApprove)
+        {
+            <div class="col-xl-4 col-12">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h4 class="dashboard-card-title">
+                            <Icon Name="IconName.Hourglass" />
+                            @L["PendingApprovals"]
+                        </h4>
+                    </div>
+                    <div class="dashboard-card-body">
+                        @if (IsLoading)
+                        {
+                            <div class="text-center py-4">
+                                <div class="modern-spinner mx-auto"></div>
                             </div>
-                        </div>
-                    }
-                    else if (MyRequests != null && MyRequests.Any())
-                    {
-                        <div class="row mb-3">
-                            <div class="col-6 col-md-3">
-                                <p class="text-muted mb-1">@L["Pending"]</p>
-                                <p class="h5">@PendingCount</p>
+                        }
+                        else if (PendingApprovalsCount == 0)
+                        {
+                            <div class="text-center py-4">
+                                <Icon Name="IconName.CheckCircle" IconSize="IconSize.x4" Color="Color.Success" Margin="Margin.Is3.FromBottom" />
+                                <p class="text-muted mb-0">@L["NoPendingApprovals"]</p>
                             </div>
-                            <div class="col-6 col-md-3">
-                                <p class="text-muted mb-1">@L["Approved"]</p>
-                                <p class="h5">@ApprovedCount</p>
+                        }
+                        else
+                        {
+                            <div class="approvals-highlight">
+                                <div class="approvals-count">@PendingApprovalsCount</div>
+                                <div class="approvals-label">@L["PendingApprovals"]</div>
                             </div>
-                            <div class="col-6 col-md-3">
-                                <p class="text-muted mb-1">@L["Rejected"]</p>
-                                <p class="h5">@RejectedCount</p>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <p class="text-muted mb-1">@L["Cancelled"]</p>
-                                <p class="h5">@CancelledCount</p>
-                            </div>
-                        </div>
-
-                        <Table Striped="true" Responsive="true">
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHeaderCell>@L["Date"]</TableHeaderCell>
-                                    <TableHeaderCell>@L["Type"]</TableHeaderCell>
-                                    <TableHeaderCell>@L["Reason"]</TableHeaderCell>
-                                    <TableHeaderCell>@L["Status"]</TableHeaderCell>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                @foreach (var req in MyRequests.OrderByDescending(r => r.CreationTime).Take(5))
-                                {
-                                    <TableRow>
-                                        <TableRowCell>@req.ExceptionDate.ToString("yyyy-MM-dd")</TableRowCell>
-                                        <TableRowCell>
-                                            @if (req.Type == ExceptionRequestType.Sick)
-                                            {
-                                                <Badge Color="Color.Danger">@L["Sick"]</Badge>
-                                            }
-                                            else
-                                            {
-                                                <Badge Color="Color.Warning">@L["SpecialCondition"]</Badge>
-                                            }
-                                        </TableRowCell>
-                                        <TableRowCell>
-                                            @if (!string.IsNullOrEmpty(req.Reason))
-                                            {
-                                                @(req.Reason.Length > 40 ? req.Reason.Substring(0, 40) + "..." : req.Reason)
-                                            }
-                                        </TableRowCell>
-                                        <TableRowCell>
-                                            @switch (req.Status)
-                                            {
-                                                case ExceptionRequestStatus.Pending:
-                                                    <Badge Color="Color.Warning">@L["Pending"]</Badge>
-                                                    break;
-                                                case ExceptionRequestStatus.Approved:
-                                                    <Badge Color="Color.Success">@L["Approved"]</Badge>
-                                                    break;
-                                                case ExceptionRequestStatus.Rejected:
-                                                    <Badge Color="Color.Danger">@L["Rejected"]</Badge>
-                                                    break;
-                                                case ExceptionRequestStatus.Cancelled:
-                                                    <Badge Color="Color.Secondary">@L["Cancelled"]</Badge>
-                                                    break;
-                                            }
-                                        </TableRowCell>
-                                    </TableRow>
-                                }
-                            </TableBody>
-                        </Table>
-                    }
-                    else
-                    {
-                        <Alert Color="Color.Info" Visible="true" Class="mt-3">
-                            <AlertDescription>@L["NoRecordsFound"]</AlertDescription>
-                        </Alert>
-                    }
+                            <a href="/pending-approvals" class="btn-modern w-100 text-center text-decoration-none">
+                                <Icon Name="IconName.Eye" />
+                                <span>@L["ViewDetails"]</span>
+                            </a>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
-    }
-
-    @if (CanApprove)
-    {
-        <div class="col-xl-4 col-12 d-flex">
-            <div class="card h-lg-100 w-100">
-                <div class="card-body">
-                    <h4 class="mb-3">@L["PendingApprovals"]</h4>
-
-                    @if (IsLoading)
-                    {
-                        <div class="text-center p-4">
-                            <div class="spinner-border" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                        </div>
-                    }
-                    else if (PendingApprovalsCount == 0)
-                    {
-                        <p class="text-muted mb-0">@L["NoPendingApprovals"]</p>
-                    }
-                    else
-                    {
-                        <p class="display-6 mb-1">@PendingApprovalsCount</p>
-                        <p class="text-muted">@L["PendingApprovals"]</p>
-                        <a href="/pending-approvals" class="btn btn-primary btn-sm">
-                            @L["ViewDetails"]
-                        </a>
-                    }
-                </div>
-            </div>
-        </div>
-    }
+        }
+    </div>
 </div>
 
 @code {
     private EmployeeWithDetailsDto CurrentEmployeeDetails { get; set; }
-
     private string CurrentScheduleName { get; set; }
     private string SeatNumber { get; set; }
     private string FloorNumber { get; set; }
-
     private List<UpcomingScheduleDay> UpcomingDays { get; set; } = new();
-
     private List<ExceptionRequestDto> MyRequests { get; set; } = new();
     private int PendingCount { get; set; }
     private int ApprovedCount { get; set; }
     private int RejectedCount { get; set; }
     private int CancelledCount { get; set; }
-
     private int PendingApprovalsCount { get; set; }
     private bool CanApprove { get; set; }
-
     private bool IsLoading { get; set; } = true;
 
     protected override async Task OnInitializedAsync()
@@ -331,27 +462,19 @@
             {
                 CurrentEmployeeDetails = await EmployeeAppService.GetWithDetailsAsync(currentEmployee.Id);
             }
-            // If no employee record found (e.g., doctor/external user), CurrentEmployeeDetails remains null
         }
         catch
         {
-            // User might not have permission to view employees or might be external user (doctor)
             CurrentEmployeeDetails = null;
         }
     }
 
     private async Task LoadScheduleSummaryAsync()
     {
-        if (CurrentEmployeeDetails == null)
-        {
-            return;
-        }
+        if (CurrentEmployeeDetails == null) return;
 
         var assignment = await ScheduleAppService.GetEmployeeCurrentScheduleAsync(CurrentEmployeeDetails.Id);
-        if (assignment == null)
-        {
-            return;
-        }
+        if (assignment == null) return;
 
         CurrentScheduleName = assignment.ScheduleName;
         SeatNumber = assignment.SeatNumber;
@@ -382,11 +505,9 @@
     {
         try
         {
-            // Only load requests if user is an employee
             if (CurrentEmployeeDetails != null)
             {
                 MyRequests = await ExceptionRequestAppService.GetMyRequestsAsync() ?? new List<ExceptionRequestDto>();
-
                 PendingCount = MyRequests.Count(r => r.Status == ExceptionRequestStatus.Pending);
                 ApprovedCount = MyRequests.Count(r => r.Status == ExceptionRequestStatus.Approved);
                 RejectedCount = MyRequests.Count(r => r.Status == ExceptionRequestStatus.Rejected);
@@ -394,22 +515,14 @@
             }
             else
             {
-                // External users (doctors) don't have their own requests
                 MyRequests = new List<ExceptionRequestDto>();
-                PendingCount = 0;
-                ApprovedCount = 0;
-                RejectedCount = 0;
-                CancelledCount = 0;
+                PendingCount = ApprovedCount = RejectedCount = CancelledCount = 0;
             }
         }
         catch
         {
-            // User might not have permission or might be external user
             MyRequests = new List<ExceptionRequestDto>();
-            PendingCount = 0;
-            ApprovedCount = 0;
-            RejectedCount = 0;
-            CancelledCount = 0;
+            PendingCount = ApprovedCount = RejectedCount = CancelledCount = 0;
         }
     }
 
@@ -449,5 +562,3 @@
         public bool IsOnSite { get; set; }
     }
 }
-
-

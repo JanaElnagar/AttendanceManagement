@@ -19,5 +19,6 @@ namespace AttendanceManagement.Interfaces
         Task DeactivateAsync(Guid id);
         Task AssignManagerAsync(AssignManagerDto input);
         Task<List<ManagerAssignmentDto>> GetManagersAsync(Guid employeeId);
+        Task<byte[]> ExportToExcelAsync();
     }
 }

@@ -164,6 +164,30 @@
     "ScheduleAssignedSuccessfully": "Schedule assigned successfully.",
     "ScheduleAssignmentUpdatedSuccessfully": "Schedule assignment updated successfully.",
     "ScheduleAssignmentEndedSuccessfully": "Schedule assignment ended successfully.",
-    "EndScheduleAssignmentConfirmation": "Are you sure you want to end this schedule assignment?"
+    "EndScheduleAssignmentConfirmation": "Are you sure you want to end this schedule assignment?",
+    "LoadingSchedule": "Loading schedule...",
+    "DetailedView": "Detailed View",
+    "RemoteWork": "Remote Work",
+    "NoScheduleAssignedMessage": "You don't have an active schedule assignment. Please contact your administrator.",
+    "ExportError": "Error exporting schedule",
+    "FloorNumber": "Floor Number",
+    
+    "Loading": "Loading...",
+    "ManageWorkflowApprovalProcesses": "Manage workflow approval processes",
+    "NoWorkflowsAvailable": "No workflows available.",
+    "EditWorkflow": "Edit Workflow",
+    "ManageWorkSchedules": "Manage work schedules",
+    "NoSchedulesAvailable": "No schedules available.",
+    "EditSchedule": "Edit Schedule",
+    "ManageEmployeeInformation": "Manage employee information",
+    "NoEmployeesAvailable": "No employees available.",
+    "ManageEmployeeGroups": "Manage employee groups",
+    "NoGroupsAvailable": "No groups available.",
+    "EditGroup": "Edit Group",
+    "ViewAndManageYourExceptionRequests": "View and manage your exception requests",
+    "NoExceptionRequestsAvailable": "No exception requests available.",
+    "ReviewAndApproveExceptionRequests": "Review and approve exception requests",
+    "NoPendingApprovalsMessage": "All requests have been processed.",
+    "ViewYourWorkSchedule": "View your work schedule"
   }
 }

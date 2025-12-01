@@ -22,6 +22,7 @@ namespace AttendanceManagement.Permissions
             public const string Create = Default + ".Create";
             public const string Edit = Default + ".Edit";
             public const string Delete = Default + ".Delete";
+            public const string Export = Default + ".Export";
         }
 
         public static class Groups
@@ -31,6 +32,7 @@ namespace AttendanceManagement.Permissions
             public const string Edit = Default + ".Edit";
             public const string Delete = Default + ".Delete";
             public const string ManageMembers = Default + ".ManageMembers";
+            public const string Export = Default + ".Export";
         }
 
         public static class Schedules
@@ -51,6 +53,7 @@ namespace AttendanceManagement.Permissions
             public const string Edit = Default + ".Edit";
             public const string Delete = Default + ".Delete";
             public const string ManageSteps = Default + ".ManageSteps";
+            public const string Export = Default + ".Export";
         }
 
         public static class ExceptionRequests

@@ -16,5 +16,6 @@ namespace AttendanceManagement.Interfaces
         Task ActivateAsync(Guid id);
         Task DeactivateAsync(Guid id);
         Task AssignWorkflowToEmployeeAsync(Guid employeeId, Guid workflowId);
+        Task<byte[]> ExportToExcelAsync();
     }
 }

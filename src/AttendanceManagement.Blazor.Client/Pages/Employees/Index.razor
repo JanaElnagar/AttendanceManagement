@@ -13,106 +13,149 @@
 @inject IUiMessageService MessageService
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
+@inject IJSRuntime JSRuntime
 @inherits AbpComponentBase
 
-<Card>
-    <CardHeader>
-        <Row Class="justify-content-between">
-            <Column ColumnSize="ColumnSize.IsAuto">
-                <h2>@L["Employees"]</h2>
-            </Column>
-            <Column ColumnSize="ColumnSize.IsAuto">
-                @if (HasCreatePermission)
-                {
-                    <Button Color="Color.Primary" Clicked="OpenCreateModalAsync">
-                        <Icon Name="IconName.Add" /> @L["NewEmployee"]
-                    </Button>
-                }
-            </Column>
-        </Row>
-    </CardHeader>
-    <CardBody>
+<div class="modern-page-wrapper">
+    <div class="glass-card">
+        @* Header Section *@
+        <div class="gradient-header">
+            <div class="gradient-header-content">
+                <Row Class="justify-content-between align-items-center">
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="header-icon-box">
+                                <Icon Name="IconName.Users" />
+                            </div>
+                            <div>
+                                <Heading Size="HeadingSize.Is3" TextColor="TextColor.White" Margin="Margin.Is0">
+                                    @L["Employees"]
+                                </Heading>
+                                <p class="text-white-50 mb-0 mt-1 small">@L["ManageEmployeeInformation"]</p>
+                            </div>
+                        </div>
+                    </Column>
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex gap-2">
+                            @if (HasExportPermission && EmployeeList != null && EmployeeList.Any())
+                            {
+                                <Button Class="btn-modern" Clicked="ExportToExcelAsync" Loading="@IsExporting">
+                                    <Icon Name="IconName.FileDownload" />
+                                    <span>@L["ExportToExcel"]</span>
+                                </Button>
+                            }
+                            @if (HasCreatePermission)
+                            {
+                                <Button Class="btn-modern" Clicked="OpenCreateModalAsync">
+                                    <Icon Name="IconName.Add" />
+                                    <span>@L["NewEmployee"]</span>
+                                </Button>
+                            }
+                        </div>
+                    </Column>
+                </Row>
+            </div>
+        </div>
+
+        @* Loading State *@
         @if (IsLoading)
         {
-            <div class="text-center p-5">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+            <div class="text-center py-5">
+                <div class="modern-spinner mx-auto mb-3"></div>
+                <p class="text-muted">@L["Loading"]</p>
             </div>
         }
         else if (EmployeeList != null && EmployeeList.Any())
         {
-            <Table Striped="true" Hoverable="true" Responsive="true">
-                <TableHeader>
-                    <TableRow>
-                        <TableHeaderCell>@L["Name"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Department"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Sector"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Group"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Status"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Actions"]</TableHeaderCell>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    @foreach (var employee in EmployeeList)
-                    {
-                        <TableRow>
-                            <TableRowCell>
-                                <a href="javascript:void(0)" @onclick="@(() => OpenDetailsModalAsync(employee.Id))">
-                                    @employee.Name
-                                </a>
-                            </TableRowCell>
-                            <TableRowCell>@employee.Department</TableRowCell>
-                            <TableRowCell>@employee.Sector</TableRowCell>
-                            <TableRowCell>@(employee.GroupName ?? "-")</TableRowCell>
-                            <TableRowCell>
-                                @if (employee.IsActive)
-                                {
-                                    <Badge Color="Color.Success">@L["Active"]</Badge>
-                                }
-                                else
-                                {
-                                    <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
-                                }
-                            </TableRowCell>
-                            <TableRowCell>
-                                <Dropdown>
-                                    <DropdownToggle Color="Color.Primary" Size="Size.Small">
-                                        @L["Actions"]
-                                    </DropdownToggle>
-                                    <DropdownMenu>
-                                        <DropdownItem Clicked="@(() => OpenDetailsModalAsync(employee.Id))">
-                                            <Icon Name="IconName.Eye" /> @L["Details"]
-                                        </DropdownItem>
-                                        @if (HasUpdatePermission)
+            @* Content Section *@
+            <div class="px-4 pb-4">
+                <div class="modern-table-wrapper">
+                    <Table Class="modern-table" Margin="Margin.Is0">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>@L["Name"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Department"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Sector"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Group"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Status"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Actions"]</TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            @foreach (var employee in EmployeeList)
+                            {
+                                <TableRow>
+                                    <TableRowCell>
+                                        <a href="javascript:void(0)" @onclick="@(() => OpenDetailsModalAsync(employee.Id))" style="color: var(--ejada-primary); font-weight: 600; text-decoration: none;">
+                                            @employee.Name
+                                        </a>
+                                    </TableRowCell>
+                                    <TableRowCell>@employee.Department</TableRowCell>
+                                    <TableRowCell>@employee.Sector</TableRowCell>
+                                    <TableRowCell>@(employee.GroupName ?? "-")</TableRowCell>
+                                    <TableRowCell>
+                                        @if (employee.IsActive)
                                         {
-                                            <DropdownItem Clicked="@(() => OpenEditModalAsync(employee.Id))">
-                                                <Icon Name="IconName.Edit" /> @L["Edit"]
-                                            </DropdownItem>
-                                            @if (employee.IsActive)
-                                            {
-                                                <DropdownItem Clicked="@(() => DeactivateEmployeeAsync(employee.Id))">
-                                                    <Icon Name="IconName.Ban" /> @L["Deactivate"]
-                                                </DropdownItem>
-                                            }
-                                            else
-                                            {
-                                                <DropdownItem Clicked="@(() => ActivateEmployeeAsync(employee.Id))">
-                                                    <Icon Name="IconName.Check" /> @L["Activate"]
-                                                </DropdownItem>
-                                            }
+                                            <Badge Color="Color.Success">@L["Active"]</Badge>
                                         }
-                                    </DropdownMenu>
-                                </Dropdown>
-                            </TableRowCell>
-                        </TableRow>
-                    }
-                </TableBody>
-            </Table>
-        
+                                        else
+                                        {
+                                            <Badge Color="Color.Secondary">@L["Inactive"]</Badge>
+                                        }
+                                    </TableRowCell>
+                                    <TableRowCell>
+                                        <Dropdown>
+                                            <DropdownToggle Color="Color.Primary" Size="Size.Small">
+                                                @L["Actions"]
+                                            </DropdownToggle>
+                                            <DropdownMenu>
+                                                <DropdownItem Clicked="@(() => OpenDetailsModalAsync(employee.Id))">
+                                                    <Icon Name="IconName.Eye" /> @L["Details"]
+                                                </DropdownItem>
+                                                @if (HasUpdatePermission)
+                                                {
+                                                    <DropdownItem Clicked="@(() => OpenEditModalAsync(employee.Id))">
+                                                        <Icon Name="IconName.Edit" /> @L["Edit"]
+                                                    </DropdownItem>
+                                                    @if (employee.IsActive)
+                                                    {
+                                                        <DropdownItem Clicked="@(() => DeactivateEmployeeAsync(employee.Id))">
+                                                            <Icon Name="IconName.Ban" /> @L["Deactivate"]
+                                                        </DropdownItem>
+                                                    }
+                                                    else
+                                                    {
+                                                        <DropdownItem Clicked="@(() => ActivateEmployeeAsync(employee.Id))">
+                                                            <Icon Name="IconName.Check" /> @L["Activate"]
+                                                        </DropdownItem>
+                                                    }
+                                                }
+                                            </DropdownMenu>
+                                        </Dropdown>
+                                    </TableRowCell>
+                                </TableRow>
+                            }
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
         }
-    </CardBody>
-</Card>
+        else
+        {
+            <div class="p-5">
+                <div class="alert-modern">
+                    <h4 class="alert-modern-heading">
+                        <Icon Name="IconName.InfoCircle" Margin="Margin.Is1.FromEnd" />
+                        @L["NoRecordsFound"]
+                    </h4>
+                    <p class="alert-modern-text mb-0">
+                        @L["NoEmployeesAvailable"]
+                    </p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
 
 <Modal @ref="EmployeeModal">
     <ModalContent Centered="true" Size="ModalSize.Large">
@@ -377,6 +420,8 @@
     private bool HasCreatePermission { get; set; }
     private bool HasUpdatePermission { get; set; }
     private bool HasScheduleAssignPermission { get; set; }
+    private bool HasExportPermission { get; set; }
+    private bool IsExporting { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -403,6 +448,7 @@
         HasCreatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Employees.Create);
         HasUpdatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Employees.Edit);
         HasScheduleAssignPermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Schedules.Assign);
+        HasExportPermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Employees.Export);
     }
 
     private async Task LoadEmployeesAsync()
@@ -759,6 +805,30 @@
         catch (Exception ex)
         {
             await MessageService.Error($"Error: {ex.Message}");
+        }
+    }
+
+    private async Task ExportToExcelAsync()
+    {
+        try
+        {
+            IsExporting = true;
+            StateHasChanged();
+
+            var fileBytes = await EmployeeAppService.ExportToExcelAsync();
+            var fileName = $"Employees_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
+
+            await MessageService.Success(L["SuccessfullyExported"]);
+        }
+        catch (Exception ex)
+        {
+            await MessageService.Error(L["ExportError"] + ": " + ex.Message);
+        }
+        finally
+        {
+            IsExporting = false;
+            StateHasChanged();
         }
     }
 }

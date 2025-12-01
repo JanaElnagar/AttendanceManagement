@@ -12,83 +12,114 @@
 @inject IStringLocalizer<AttendanceManagementResource> L
 @inherits AbpComponentBase
 
-<Card>
-    <CardHeader>
-        <h2>@L["PendingApprovals"]</h2>
-    </CardHeader>
-    <CardBody>
+<div class="modern-page-wrapper">
+    <div class="glass-card">
+        @* Header Section *@
+        <div class="gradient-header">
+            <div class="gradient-header-content">
+                <Row Class="justify-content-between align-items-center">
+                    <Column ColumnSize="ColumnSize.IsAuto">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="header-icon-box">
+                                <Icon Name="IconName.Hourglass" />
+                            </div>
+                            <div>
+                                <Heading Size="HeadingSize.Is3" TextColor="TextColor.White" Margin="Margin.Is0">
+                                    @L["PendingApprovals"]
+                                </Heading>
+                                <p class="text-white-50 mb-0 mt-1 small">@L["ReviewAndApproveExceptionRequests"]</p>
+                            </div>
+                        </div>
+                    </Column>
+                </Row>
+            </div>
+        </div>
+
+        @* Loading State *@
         @if (IsLoading)
         {
-            <div class="text-center p-5">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
+            <div class="text-center py-5">
+                <div class="modern-spinner mx-auto mb-3"></div>
+                <p class="text-muted">@L["Loading"]</p>
             </div>
         }
         else if (PendingRequests != null && PendingRequests.Any())
         {
-            <Table Striped="true" Hoverable="true" Responsive="true">
-                <TableHeader>
-                    <TableRow>
-                        <TableHeaderCell>@L["Employee"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Date"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Type"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Reason"]</TableHeaderCell>
-                        <TableHeaderCell>@L["CurrentStep"]</TableHeaderCell>
-                        <TableHeaderCell>@L["SubmittedOn"]</TableHeaderCell>
-                        <TableHeaderCell>@L["Actions"]</TableHeaderCell>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    @foreach (var request in PendingRequests)
-                    {
-                        <TableRow>
-                            <TableRowCell>@(request.EmployeeName ?? "-")</TableRowCell>
-                            <TableRowCell>@request.ExceptionDate.ToString("yyyy-MM-dd (dddd)")</TableRowCell>
-                            <TableRowCell>
-                                @if (request.Type == ExceptionRequestType.Sick)
-                                {
-                                    <Badge Color="Color.Danger">@L["Sick"]</Badge>
-                                }
-                                else
-                                {
-                                    <Badge Color="Color.Warning">@L["SpecialCondition"]</Badge>
-                                }
-                            </TableRowCell>
-                            <TableRowCell>
-                                @if (!string.IsNullOrEmpty(request.Reason))
-                                {
-                                    @(request.Reason.Length > 50 ? request.Reason.Substring(0, 50) + "..." : request.Reason)
-                                }
-                            </TableRowCell>
-                            <TableRowCell>@request.CurrentStepOrder</TableRowCell>
-                            <TableRowCell>@request.CreationTime.ToString("yyyy-MM-dd")</TableRowCell>
-                            <TableRowCell>
-                                <Button Color="Color.Success" Size="Size.Small" Clicked="@(() => OpenApprovalModalAsync(request.Id, ApprovalAction.Approved))">
-                                    <Icon Name="IconName.Check" /> @L["Approve"]
-                                </Button>
-                                <Button Color="Color.Danger" Size="Size.Small" Clicked="@(() => OpenApprovalModalAsync(request.Id, ApprovalAction.Rejected))" Margin="Margin.Is1.FromStart">
-                                    <Icon Name="IconName.Times" /> @L["Reject"]
-                                </Button>
-                                <Button Color="Color.Info" Size="Size.Small" Clicked="@(() => ViewRequestDetailsAsync(request.Id))" Margin="Margin.Is1.FromStart">
-                                    <Icon Name="IconName.Eye" /> @L["Details"]
-                                </Button>
-                            </TableRowCell>
-                        </TableRow>
-                    }
-                </TableBody>
-            </Table>
+            @* Content Section *@
+            <div class="px-4 pb-4">
+                <div class="modern-table-wrapper">
+                    <Table Class="modern-table" Margin="Margin.Is0">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHeaderCell>@L["Employee"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Date"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Type"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Reason"]</TableHeaderCell>
+                                <TableHeaderCell>@L["CurrentStep"]</TableHeaderCell>
+                                <TableHeaderCell>@L["SubmittedOn"]</TableHeaderCell>
+                                <TableHeaderCell>@L["Actions"]</TableHeaderCell>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            @foreach (var request in PendingRequests)
+                            {
+                                <TableRow>
+                                    <TableRowCell>
+                                        <strong>@(request.EmployeeName ?? "-")</strong>
+                                    </TableRowCell>
+                                    <TableRowCell>@request.ExceptionDate.ToString("yyyy-MM-dd (dddd)")</TableRowCell>
+                                    <TableRowCell>
+                                        @if (request.Type == ExceptionRequestType.Sick)
+                                        {
+                                            <Badge Color="Color.Danger">@L["Sick"]</Badge>
+                                        }
+                                        else
+                                        {
+                                            <Badge Color="Color.Warning">@L["SpecialCondition"]</Badge>
+                                        }
+                                    </TableRowCell>
+                                    <TableRowCell>
+                                        @if (!string.IsNullOrEmpty(request.Reason))
+                                        {
+                                            @(request.Reason.Length > 50 ? request.Reason.Substring(0, 50) + "..." : request.Reason)
+                                        }
+                                    </TableRowCell>
+                                    <TableRowCell>@request.CurrentStepOrder</TableRowCell>
+                                    <TableRowCell>@request.CreationTime.ToString("yyyy-MM-dd")</TableRowCell>
+                                    <TableRowCell>
+                                        <Button Color="Color.Success" Size="Size.Small" Clicked="@(() => OpenApprovalModalAsync(request.Id, ApprovalAction.Approved))">
+                                            <Icon Name="IconName.Check" /> @L["Approve"]
+                                        </Button>
+                                        <Button Color="Color.Danger" Size="Size.Small" Clicked="@(() => OpenApprovalModalAsync(request.Id, ApprovalAction.Rejected))" Margin="Margin.Is1.FromStart">
+                                            <Icon Name="IconName.Times" /> @L["Reject"]
+                                        </Button>
+                                        <Button Color="Color.Info" Size="Size.Small" Clicked="@(() => ViewRequestDetailsAsync(request.Id))" Margin="Margin.Is1.FromStart">
+                                            <Icon Name="IconName.Eye" /> @L["Details"]
+                                        </Button>
+                                    </TableRowCell>
+                                </TableRow>
+                            }
+                        </TableBody>
+                    </Table>
+                </div>
+            </div>
         }
         else
         {
-            <Alert Color="Color.Info" Visible="true">
-                <AlertDescription>
-                    <Icon Name="IconName.InfoCircle" /> @L["NoPendingApprovals"]
-                </AlertDescription>
-            </Alert>
+            <div class="p-5">
+                <div class="alert-modern">
+                    <h4 class="alert-modern-heading">
+                        <Icon Name="IconName.InfoCircle" Margin="Margin.Is1.FromEnd" />
+                        @L["NoPendingApprovals"]
+                    </h4>
+                    <p class="alert-modern-text mb-0">
+                        @L["NoPendingApprovalsMessage"]
+                    </p>
+                </div>
+            </div>
         }
-    </CardBody>
-</Card>
+    </div>
+</div>
 
 @* Approval Modal *@
 <Modal @ref="ApprovalModal">

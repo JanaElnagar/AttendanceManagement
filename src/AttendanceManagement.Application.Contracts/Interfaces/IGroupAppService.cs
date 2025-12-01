@@ -16,5 +16,6 @@ namespace AttendanceManagement.Interfaces
         Task<List<GroupDto>> GetActiveGroupsAsync();
         Task ActivateAsync(Guid id);
         Task DeactivateAsync(Guid id);
+        Task<byte[]> ExportToExcelAsync();
     }
 }

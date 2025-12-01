@@ -321,5 +321,22 @@ html {
     }
 
 .lpx-language-selection .dropdown-toggle .lpx-icon {
-    color: color: var(--ejada-primary) !important; 
+    color: var(--ejada-primary) !important; 
+}
+
+/*form-switch color - Using more specific selector to override framework rules */
+.form-switch .form-check-input:checked,
+.form-switch input[type="checkbox"].form-check-input:checked,
+.form-check.form-switch .form-check-input:checked,
+body .form-switch .form-check-input:checked,
+html body .form-switch .form-check-input:checked {
+    border-color: var(--ejada-primary) !important;
+    background-color: var(--ejada-primary) !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+/*dropdown menus*/
+.dropdown-menu {
+    --bs-dropdown-link-active-bg: var(--ejada-primary) !important;
+    --bs-dropdown-header-color: var(--ejada-primary) !important;
 }

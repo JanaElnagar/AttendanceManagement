@@ -2,9 +2,12 @@
 @using AttendanceManagement.Interfaces
 @using AttendanceManagement.Permissions
 @using AttendanceManagement.Dtos.Schedules
+@using System.IO
 @using Volo.Abp.Application.Dtos
 @using Volo.Abp.AspNetCore.Components.Messages
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using AttendanceManagement.Dtos.Employees
 @attribute [Authorize(AttendanceManagementPermissions.Employees.Default)]
 @inject IEmployeeAppService EmployeeAppService
 @inject IGroupAppService GroupAppService
@@ -37,6 +40,18 @@
                     </Column>
                     <Column ColumnSize="ColumnSize.IsAuto">
                         <div class="d-flex gap-2">
+                            @if (HasCreatePermission)
+                            {
+                                <Button Class="btn-modern" Clicked="DownloadTemplateAsync" Loading="@IsDownloadingTemplate">
+                                    <Icon Name="IconName.FileAlt" />
+                                    <span>@L["DownloadTemplate"]</span>
+                                </Button>
+                                <label class="btn-modern" style="cursor: pointer; margin: 0;">
+                                    <Icon Name="IconName.FileUpload" />
+                                    <span>@L["ImportExcel"]</span>
+                                    <InputFile OnChange="HandleFileSelected" accept=".xlsx,.xls" style="display: none;" />
+                                </label>
+                            }
                             @if (HasExportPermission && EmployeeList != null && EmployeeList.Any())
                             {
                                 <Button Class="btn-modern" Clicked="ExportToExcelAsync" Loading="@IsExporting">
@@ -406,6 +421,85 @@
     </ModalContent>
 </Modal>
 
+@* Import Results Modal *@
+<Modal @ref="ImportResultsModal" Size="ModalSize.ExtraLarge">
+    <ModalContent>
+        <ModalHeader>
+            <ModalTitle>@L["ImportResults"]</ModalTitle>
+        </ModalHeader>
+        <ModalBody>
+            @if (ImportResult != null)
+            {
+                <div class="mb-3">
+                    <div class="d-flex gap-4 mb-3">
+                        <div class="p-3 rounded" style="background: #f0f9ff; border-left: 4px solid #3b82f6;">
+                            <div class="small text-muted mb-1">@L["TotalRows"]</div>
+                            <div class="fs-4 fw-bold">@ImportResult.TotalRows</div>
+                        </div>
+                        <div class="p-3 rounded" style="background: #f0fdf4; border-left: 4px solid #10b981;">
+                            <div class="small text-muted mb-1">@L["SuccessfullyImported"]</div>
+                            <div class="fs-4 fw-bold" style="color: #10b981;">@ImportResult.SuccessCount</div>
+                        </div>
+                        <div class="p-3 rounded" style="background: #fef2f2; border-left: 4px solid #ef4444;">
+                            <div class="small text-muted mb-1">@L["Failed"]</div>
+                            <div class="fs-4 fw-bold" style="color: #ef4444;">@ImportResult.FailureCount</div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (ImportResult.Errors != null && ImportResult.Errors.Any())
+                {
+                    <div class="alert alert-warning">
+                        <Icon Name="IconName.ExclamationTriangle" />
+                        <strong>@L["ImportErrors"]</strong>
+                        <p class="mb-0">@L["ImportErrorsMessage"]</p>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <Table Class="table table-sm">
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHeaderCell>@L["RowNumber"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["EmployeeName"]</TableHeaderCell>
+                                    <TableHeaderCell>@L["Errors"]</TableHeaderCell>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                @foreach (var error in ImportResult.Errors)
+                                {
+                                    <TableRow>
+                                        <TableRowCell>@error.RowNumber</TableRowCell>
+                                        <TableRowCell>@error.EmployeeName</TableRowCell>
+                                        <TableRowCell>
+                                            <ul class="mb-0" style="padding-left: 20px;">
+                                                @foreach (var errorMsg in error.ErrorMessages)
+                                                {
+                                                    <li class="text-danger">@errorMsg</li>
+                                                }
+                                            </ul>
+                                        </TableRowCell>
+                                    </TableRow>
+                                }
+                            </TableBody>
+                        </Table>
+                    </div>
+                }
+                else if (ImportResult.SuccessCount > 0)
+                {
+                    <div class="alert alert-success">
+                        <Icon Name="IconName.CheckCircle" />
+                        <strong>@L["ImportSuccess"]</strong>
+                        <p class="mb-0">@L["ImportSuccessMessage"]</p>
+                    </div>
+                }
+            }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Primary" Clicked="CloseImportResultsModal">@L["Close"]</Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
 @code {
     private List<EmployeeDto> EmployeeList { get; set; }
     private int TotalCount { get; set; }
@@ -418,6 +512,7 @@
     private Modal EmployeeModal { get; set; }
     private Modal DetailsModal { get; set; }
     private Modal ScheduleAssignmentModal { get; set; }
+    private Modal ImportResultsModal { get; set; }
 
     private CreateUpdateEmployeeDto EditingEmployee { get; set; }
     private Guid? EditingEmployeeId { get; set; }
@@ -442,6 +537,9 @@
     private bool HasScheduleAssignPermission { get; set; }
     private bool HasExportPermission { get; set; }
     private bool IsExporting { get; set; }
+    private bool IsDownloadingTemplate { get; set; }
+    private bool IsImporting { get; set; }
+    private ImportResultDto ImportResult { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -852,5 +950,83 @@
             IsExporting = false;
             StateHasChanged();
         }
+    }
+
+    private async Task DownloadTemplateAsync()
+    {
+        try
+        {
+            IsDownloadingTemplate = true;
+            StateHasChanged();
+
+            var fileBytes = await EmployeeAppService.DownloadImportTemplateAsync();
+            var fileName = "Employee_Import_Template.xlsx";
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
+
+            await MessageService.Success(L["TemplateDownloaded"]);
+        }
+        catch (Exception ex)
+        {
+            await MessageService.Error($"Error downloading template: {ex.Message}");
+        }
+        finally
+        {
+            IsDownloadingTemplate = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null)
+                return;
+
+            if (!file.Name.EndsWith(".xlsx", StringComparison.OrdinalIgnoreCase) && 
+                !file.Name.EndsWith(".xls", StringComparison.OrdinalIgnoreCase))
+            {
+                await MessageService.Error(L["InvalidFileFormat"]);
+                return;
+            }
+
+            IsImporting = true;
+            StateHasChanged();
+
+            using (var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024)) // 10MB max
+            using (var memoryStream = new MemoryStream())
+            {
+                await stream.CopyToAsync(memoryStream);
+                var fileBytes = memoryStream.ToArray();
+
+                ImportResult = await EmployeeAppService.ImportFromExcelAsync(fileBytes);
+
+                // Reload employees if any were successfully imported
+                if (ImportResult.SuccessCount > 0)
+                {
+                    await LoadEmployeesAsync();
+                }
+
+                // Show results modal
+                await ImportResultsModal.Show();
+            }
+        }
+        catch (Exception ex)
+        {
+            await MessageService.Error($"Error importing file: {ex.Message}");
+        }
+        finally
+        {
+            IsImporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CloseImportResultsModal()
+    {
+        await ImportResultsModal.Hide();
+        ImportResult = null;
+        StateHasChanged();
     }
 }

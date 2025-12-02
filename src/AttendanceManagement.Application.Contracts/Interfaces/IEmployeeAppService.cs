@@ -20,5 +20,7 @@ namespace AttendanceManagement.Interfaces
         Task AssignManagerAsync(AssignManagerDto input);
         Task<List<ManagerAssignmentDto>> GetManagersAsync(Guid employeeId);
         Task<byte[]> ExportToExcelAsync();
+        Task<byte[]> DownloadImportTemplateAsync();
+        Task<ImportResultDto> ImportFromExcelAsync(byte[] fileData);
     }
 }

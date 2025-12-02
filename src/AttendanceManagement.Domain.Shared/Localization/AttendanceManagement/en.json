@@ -192,6 +192,22 @@
     "ReviewAndApproveExceptionRequests": "Review and approve exception requests",
     "NoPendingApprovalsMessage": "All requests have been processed.",
     "ViewYourWorkSchedule": "View your work schedule",
-    "FileDownloadedSuccessfully": "File downloaded successfully"
+    "FileDownloadedSuccessfully": "File downloaded successfully",
+    
+    "DownloadTemplate": "Download Template",
+    "ImportExcel": "Import Excel",
+    "TemplateDownloaded": "Template downloaded successfully",
+    "InvalidFileFormat": "Invalid file format. Please upload an Excel file (.xlsx or .xls).",
+    "ImportResults": "Import Results",
+    "TotalRows": "Total Rows",
+    "SuccessfullyImported": "Successfully Imported",
+    "Failed": "Failed",
+    "ImportErrors": "Import Errors",
+    "ImportErrorsMessage": "The following rows had errors and were not imported. Please fix the errors and try again.",
+    "RowNumber": "Row Number",
+    "EmployeeName": "Employee Name",
+    "Errors": "Errors",
+    "ImportSuccess": "Import Successful",
+    "ImportSuccessMessage": "All employees were imported successfully."
   }
 }

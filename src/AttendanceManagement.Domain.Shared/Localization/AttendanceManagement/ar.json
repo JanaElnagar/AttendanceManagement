@@ -192,6 +192,22 @@
     "ReviewAndApproveExceptionRequests": "مراجعة والموافقة على طلبات الاستثناء",
     "NoPendingApprovalsMessage": "تمت معالجة جميع الطلبات.",
     "ViewYourWorkSchedule": "عرض جدول عملك",
-    "FileDownloadedSuccessfully": "تم تنزيل الملف بنجاح"
+    "FileDownloadedSuccessfully": "تم تنزيل الملف بنجاح",
+    
+    "DownloadTemplate": "تحميل القالب",
+    "ImportExcel": "استيراد Excel",
+    "TemplateDownloaded": "تم تنزيل القالب بنجاح",
+    "InvalidFileFormat": "تنسيق الملف غير صالح. يرجى تحميل ملف Excel (.xlsx أو .xls).",
+    "ImportResults": "نتائج الاستيراد",
+    "TotalRows": "إجمالي الصفوف",
+    "SuccessfullyImported": "تم الاستيراد بنجاح",
+    "Failed": "فشل",
+    "ImportErrors": "أخطاء الاستيراد",
+    "ImportErrorsMessage": "الصفوف التالية بها أخطاء ولم يتم استيرادها. يرجى إصلاح الأخطاء والمحاولة مرة أخرى.",
+    "RowNumber": "رقم الصف",
+    "EmployeeName": "اسم الموظف",
+    "Errors": "الأخطاء",
+    "ImportSuccess": "نجح الاستيراد",
+    "ImportSuccessMessage": "تم استيراد جميع الموظفين بنجاح."
   }
 }

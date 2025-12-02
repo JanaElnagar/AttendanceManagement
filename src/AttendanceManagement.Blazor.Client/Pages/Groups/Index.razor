@@ -114,6 +114,9 @@
                                                     <DropdownItem Clicked="@(() => OpenEditModalAsync(group.Id))">
                                                         <Icon Name="IconName.Edit" /> @L["Edit"]
                                                     </DropdownItem>
+                                                    <DropdownItem Clicked="@(() => OpenManageMembersModalAsync(group.Id))">
+                                                        <Icon Name="IconName.UserPlus" /> @L["ManageMembers"]
+                                                    </DropdownItem>
                                                     @if (group.IsActive)
                                                     {
                                                         <DropdownItem Clicked="@(() => DeactivateGroupAsync(group.Id))">
@@ -258,6 +261,84 @@
     </ModalContent>
 </Modal>
 
+<Modal @ref="ManageMembersModal">
+    <ModalContent Centered="true" Size="ModalSize.Large">
+        <ModalHeader>
+            <ModalTitle>@L["ManageMembers"] - @(SelectedGroupForMembers?.Name ?? "")</ModalTitle>
+            <CloseButton Clicked="CloseManageMembersModalAsync" />
+        </ModalHeader>
+        <ModalBody>
+            @if (IsLoadingMembers)
+            {
+                <div class="text-center py-4">
+                    <div class="modern-spinner mx-auto mb-3"></div>
+                    <p class="text-muted">@L["Loading"]</p>
+                </div>
+            }
+            else
+            {
+                <Field>
+                    <FieldLabel>@L["SelectEmployees"]</FieldLabel>
+                    <FieldHelp>@L["SelectEmployeesToAddToGroup"]</FieldHelp>
+                    <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                        @if (AvailableEmployees != null && AvailableEmployees.Any())
+                        {
+                            <div class="mb-2">
+                                <Button Color="Color.Light" Size="Size.Small" Clicked="SelectAllEmployees">
+                                    <Icon Name="IconName.CheckSquare" />
+                                    @L["SelectAll"]
+                                </Button>
+                                <Button Color="Color.Light" Size="Size.Small" Clicked="DeselectAllEmployees" Margin="Margin.Is1.FromStart">
+                                    <Icon Name="IconName.Square" />
+                                    @L["DeselectAll"]
+                                </Button>
+                            </div>
+                            <div class="list-group">
+                                @foreach (var employee in AvailableEmployees)
+                                {
+                                    <div class="list-group-item">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   checked="@IsEmployeeSelected(employee.Id)"
+                                                   @onchange="@((e) => ToggleEmployeeSelection(employee.Id, e.Value))"
+                                                   id="employee-@employee.Id" />
+                                            <label class="form-check-label" for="employee-@employee.Id">
+                                                <strong>@employee.Name</strong>
+                                                <span class="text-muted ms-2">(@employee.Department)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <Alert Color="Color.Info" Visible="true">
+                                <AlertDescription>@L["NoEmployeesAvailable"]</AlertDescription>
+                            </Alert>
+                        }
+                    </div>
+                </Field>
+                @if (SelectedEmployeeIds != null && SelectedEmployeeIds.Any())
+                {
+                    <Alert Color="Color.Info" Visible="true" Margin="Margin.Is3.FromTop">
+                        <AlertDescription>
+                            @L["SelectedEmployeesCount"]: <strong>@SelectedEmployeeIds.Count</strong>
+                        </AlertDescription>
+                    </Alert>
+                }
+            }
+        </ModalBody>
+        <ModalFooter>
+            <Button Color="Color.Secondary" Clicked="CloseManageMembersModalAsync">@L["Cancel"]</Button>
+            <Button Color="Color.Primary" Clicked="SaveBulkAssignmentAsync" Loading="@IsSavingMembers" Disabled="@(SelectedEmployeeIds == null || !SelectedEmployeeIds.Any())">
+                <Icon Name="IconName.Save" />
+                @L["AddSelectedEmployees"]
+            </Button>
+        </ModalFooter>
+    </ModalContent>
+</Modal>
+
 @code {
     private List<GroupDto> GroupList { get; set; }
     private bool IsLoading { get; set; } = true;
@@ -265,11 +346,18 @@
 
     private Modal GroupModal { get; set; }
     private Modal DetailsModal { get; set; }
+    private Modal ManageMembersModal { get; set; }
 
     private CreateUpdateGroupDto EditingGroup { get; set; }
     private Guid? EditingGroupId { get; set; }
     private GroupWithEmployeesDto SelectedGroupDetails { get; set; }
+    private GroupDto SelectedGroupForMembers { get; set; }
     private string ModalTitle { get; set; }
+    
+    private List<EmployeeDto> AvailableEmployees { get; set; } = new();
+    private List<Guid> SelectedEmployeeIds { get; set; } = new();
+    private bool IsLoadingMembers { get; set; }
+    private bool IsSavingMembers { get; set; }
 
     private bool HasCreatePermission { get; set; }
     private bool HasUpdatePermission { get; set; }
@@ -539,6 +627,137 @@
                 await MessageService.Error($"Error: {ex.Message}");
             }
             catch { }
+        }
+    }
+
+    private async Task OpenManageMembersModalAsync(Guid groupId)
+    {
+        try
+        {
+            SelectedGroupForMembers = GroupList?.FirstOrDefault(g => g.Id == groupId);
+            SelectedEmployeeIds = new List<Guid>();
+            IsLoadingMembers = true;
+            StateHasChanged();
+
+            // Load all active employees
+            var employees = await EmployeeAppService.GetActiveEmployeesAsync();
+            AvailableEmployees = employees?.ToList() ?? new List<EmployeeDto>();
+
+            if (ManageMembersModal != null)
+            {
+                await ManageMembersModal.Show();
+            }
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error loading employees: {ex.Message}");
+            }
+            catch { }
+        }
+        finally
+        {
+            IsLoadingMembers = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CloseManageMembersModalAsync()
+    {
+        try
+        {
+            if (ManageMembersModal != null)
+            {
+                await ManageMembersModal.Hide();
+            }
+            SelectedEmployeeIds = new List<Guid>();
+            SelectedGroupForMembers = null;
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private bool IsEmployeeSelected(Guid employeeId)
+    {
+        return SelectedEmployeeIds != null && SelectedEmployeeIds.Contains(employeeId);
+    }
+
+    private void ToggleEmployeeSelection(Guid employeeId, object isChecked)
+    {
+        if (SelectedEmployeeIds == null)
+        {
+            SelectedEmployeeIds = new List<Guid>();
+        }
+
+        var checkedValue = isChecked is bool boolValue ? boolValue : false;
+
+        if (checkedValue)
+        {
+            if (!SelectedEmployeeIds.Contains(employeeId))
+            {
+                SelectedEmployeeIds.Add(employeeId);
+            }
+        }
+        else
+        {
+            SelectedEmployeeIds.Remove(employeeId);
+        }
+        StateHasChanged();
+    }
+
+    private void SelectAllEmployees()
+    {
+        if (AvailableEmployees != null && AvailableEmployees.Any())
+        {
+            SelectedEmployeeIds = AvailableEmployees.Select(e => e.Id).ToList();
+            StateHasChanged();
+        }
+    }
+
+    private void DeselectAllEmployees()
+    {
+        SelectedEmployeeIds = new List<Guid>();
+        StateHasChanged();
+    }
+
+    private async Task SaveBulkAssignmentAsync()
+    {
+        try
+        {
+            if (SelectedGroupForMembers == null || SelectedEmployeeIds == null || !SelectedEmployeeIds.Any())
+            {
+                await MessageService.Warn(L["PleaseSelectEmployees"]);
+                return;
+            }
+
+            IsSavingMembers = true;
+            StateHasChanged();
+
+            var input = new BulkAssignEmployeesDto
+            {
+                GroupId = SelectedGroupForMembers.Id,
+                EmployeeIds = SelectedEmployeeIds
+            };
+
+            await GroupAppService.BulkAssignEmployeesAsync(input);
+
+            await CloseManageMembersModalAsync();
+            await LoadGroupsAsync();
+            await MessageService.Success(L["EmployeesAddedSuccessfully"]);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error: {ex.Message}");
+            }
+            catch { }
+        }
+        finally
+        {
+            IsSavingMembers = false;
+            StateHasChanged();
         }
     }
 

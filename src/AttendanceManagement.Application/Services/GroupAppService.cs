@@ -25,8 +25,13 @@ namespace AttendanceManagement.Services
         CrudAppService<Group, GroupDto, Guid, PagedAndSortedResultRequestDto, CreateUpdateGroupDto>,
         IGroupAppService
     {
-        public GroupAppService(IRepository<Group, Guid> repository) : base(repository)
+        private readonly IRepository<Employee, Guid> _employeeRepository;
+
+        public GroupAppService(
+            IRepository<Group, Guid> repository,
+            IRepository<Employee, Guid> employeeRepository) : base(repository)
         {
+            _employeeRepository = employeeRepository;
             GetPolicyName = AttendanceManagementPermissions.Groups.Default;
             GetListPolicyName = AttendanceManagementPermissions.Groups.Default;
             CreatePolicyName = AttendanceManagementPermissions.Groups.Create;
@@ -78,6 +83,34 @@ namespace AttendanceManagement.Services
             var group = await Repository.GetAsync(id);
             group.IsActive = false;
             await Repository.UpdateAsync(group);
+        }
+
+        public async Task BulkAssignEmployeesAsync(BulkAssignEmployeesDto input)
+        {
+            await CheckUpdatePolicyAsync();
+
+            // Validate group exists
+            var group = await Repository.GetAsync(input.GroupId);
+
+            if (input.EmployeeIds == null || !input.EmployeeIds.Any())
+            {
+                throw new UserFriendlyException("No employees selected.");
+            }
+
+            // Get all employees to assign
+            var employees = await _employeeRepository.GetListAsync(e => input.EmployeeIds.Contains(e.Id));
+
+            if (employees.Count != input.EmployeeIds.Count)
+            {
+                throw new UserFriendlyException("One or more selected employees do not exist.");
+            }
+
+            // Assign all employees to the group
+            foreach (var employee in employees)
+            {
+                employee.AssignToGroup(input.GroupId);
+                await _employeeRepository.UpdateAsync(employee);
+            }
         }
 
         public override async Task<GroupDto> CreateAsync(CreateUpdateGroupDto input)

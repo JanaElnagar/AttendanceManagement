@@ -407,12 +407,6 @@ namespace AttendanceManagement.Services
             var currentEmployee = await _employeeRepository
                 .FirstOrDefaultAsync(e => e.UserId == _currentUser.Id.Value);
             
-            // If user doesn't have an employee record and doesn't have ViewAll, return empty list
-            if (currentEmployee == null)
-            {
-                _logger.LogWarning($"User {_currentUser.Id} does not have an employee record and cannot view pending approvals.");
-                return new List<ExceptionRequestDto>();
-            }
 
             // Check if user has doctor approval permission
             bool canApproveAsDoctor = false;

@@ -64,7 +64,7 @@
     "Employee": "Employee",
     "SelectEmployee": "Select Employee",
     "SelectGroup": "Select Group",
-    "EffectiveFrom": "Effective From",
+    "EffectiveFrom": "Starting From",
     "EffectiveTo": "Effective To",
     "ExportToExcel": "Export to Excel",
     "NoScheduleAssigned": "No schedule assigned to you yet.",

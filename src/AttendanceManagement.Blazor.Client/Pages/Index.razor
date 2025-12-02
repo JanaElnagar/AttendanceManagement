@@ -149,7 +149,7 @@
                                 <div class="modern-spinner mx-auto"></div>
                             </div>
                         }
-                        else if (UpcomingDays != null && UpcomingDays.Any())
+                        else if (ScheduleDays != null && ScheduleDays.Any())
                         {
                             @if (!string.IsNullOrEmpty(CurrentScheduleName))
                             {
@@ -182,56 +182,11 @@
                                 </div>
                             }
 
-                            <div class="modern-table-wrapper">
-                                <Table Class="modern-table" Margin="Margin.Is0">
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHeaderCell>@L["Date"]</TableHeaderCell>
-                                            <TableHeaderCell>@L["Day"]</TableHeaderCell>
-                                            <TableHeaderCell>@L["WorkLocation"]</TableHeaderCell>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        @foreach (var day in UpcomingDays)
-                                        {
-                                            var isToday = day.Date.Date == DateTime.Today;
-                                            <TableRow Class="@(isToday ? "today-highlight" : "")">
-                                                <TableRowCell>
-                                                    <strong>@day.Date.ToString("yyyy-MM-dd")</strong>
-                                                </TableRowCell>
-                                                <TableRowCell>
-                                                    <div class="d-flex align-items-center gap-2">
-                                                        @day.Date.ToString("dddd")
-                                                        @if (isToday)
-                                                        {
-                                                            <span class="badge-modern badge-today">
-                                                                <Icon Name="IconName.Star" IconSize="IconSize.Small" />
-                                                                @L["Today"]
-                                                            </span>
-                                                        }
-                                                    </div>
-                                                </TableRowCell>
-                                                <TableRowCell>
-                                                    @if (day.IsOnSite)
-                                                    {
-                                                        <span class="badge-modern badge-onsite">
-                                                            <Icon Name="IconName.Building" IconSize="IconSize.Small" />
-                                                            @L["OnSite"]
-                                                        </span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span class="badge-modern badge-remote">
-                                                            <Icon Name="IconName.Home" IconSize="IconSize.Small" />
-                                                            @L["Remote"]
-                                                        </span>
-                                                    }
-                                                </TableRowCell>
-                                            </TableRow>
-                                        }
-                                    </TableBody>
-                                </Table>
-                            </div>
+                            <WeekScheduleTable 
+                                ScheduleDays="@GetScheduleDaysForComponent()" 
+                                SeatNumber="@SeatNumber" 
+                                FloorNumber="@FloorNumber" 
+                                DaysToShow="7" />
                         }
                         else
                         {
@@ -431,7 +386,7 @@
     private string CurrentScheduleName { get; set; }
     private string SeatNumber { get; set; }
     private string FloorNumber { get; set; }
-    private List<UpcomingScheduleDay> UpcomingDays { get; set; } = new();
+    private List<ScheduleDayDto> ScheduleDays { get; set; } = new();
     private List<ExceptionRequestDto> MyRequests { get; set; } = new();
     private int PendingCount { get; set; }
     private int ApprovedCount { get; set; }
@@ -496,24 +451,12 @@
         FloorNumber = assignment.FloorNumber;
 
         var schedule = await ScheduleAppService.GetAsync(assignment.ScheduleId);
-        var days = schedule.ScheduleDays?.ToList() ?? new List<ScheduleDayDto>();
+        ScheduleDays = schedule.ScheduleDays?.ToList() ?? new List<ScheduleDayDto>();
+    }
 
-        UpcomingDays.Clear();
-        for (int i = 0; i < 7; i++)
-        {
-            var date = DateTime.Today.AddDays(i);
-            var dayOfWeek = date.DayOfWeek;
-            var dayDef = days.FirstOrDefault(d => d.DayOfWeek == dayOfWeek);
-
-            if (dayDef != null)
-            {
-                UpcomingDays.Add(new UpcomingScheduleDay
-                {
-                    Date = date,
-                    IsOnSite = dayDef.IsOnSite
-                });
-            }
-        }
+    private List<ScheduleDayDto> GetScheduleDaysForComponent()
+    {
+        return ScheduleDays ?? new List<ScheduleDayDto>();
     }
 
     private async Task LoadRequestsSummaryAsync()
@@ -569,11 +512,5 @@
     private string GetEmployeeCardTitle()
     {
         return CurrentEmployeeDetails != null ? L["Employees"] : L["UserInfo"];
-    }
-
-    private class UpcomingScheduleDay
-    {
-        public DateTime Date { get; set; }
-        public bool IsOnSite { get; set; }
     }
 }

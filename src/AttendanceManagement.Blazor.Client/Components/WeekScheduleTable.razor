@@ -1,0 +1,177 @@
+@using AttendanceManagement.Dtos.Schedules
+@using AttendanceManagement.Enums
+@using Microsoft.Extensions.Localization
+@using AttendanceManagement.Localization
+@using System.Linq
+@using Microsoft.AspNetCore.Components
+@inherits ComponentBase
+@inject IStringLocalizer<AttendanceManagementResource> L
+
+@if (ScheduleDays != null && ScheduleDays.Any())
+{
+    var upcomingDaysList = GetUpcomingDays();
+    @if (upcomingDaysList.Any())
+    {
+        <div class="modern-table-wrapper">
+            <Table Class="modern-table" Margin="Margin.Is0">
+                <TableHeader>
+                    <TableRow>
+                        <TableHeaderCell>@L["Date"]</TableHeaderCell>
+                        <TableHeaderCell>@L["Day"]</TableHeaderCell>
+                        <TableHeaderCell>@L["WorkLocation"]</TableHeaderCell>
+                        <TableHeaderCell>@L["SeatNumber"]</TableHeaderCell>
+                        <TableHeaderCell>@L["FloorNumber"]</TableHeaderCell>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    @foreach (var day in upcomingDaysList)
+                    {
+                        var isToday = day.Date.Date == DateTime.Today;
+                        <TableRow Class="@(isToday ? "today-highlight" : "")">
+                            <TableRowCell>
+                                <strong>@day.Date.ToString("yyyy-MM-dd")</strong>
+                            </TableRowCell>
+                            <TableRowCell>
+                                <div class="d-flex align-items-center gap-2">
+                                    @day.Date.ToString("dddd")
+                                    @if (isToday)
+                                    {
+                                        <span class="badge-modern badge-today">
+                                            <Icon Name="IconName.Star" IconSize="IconSize.Small" />
+                                            @L["Today"]
+                                        </span>
+                                    }
+                                </div>
+                            </TableRowCell>
+                            <TableRowCell>
+                                @if (day.IsOnSite)
+                                {
+                                    <span class="badge-modern badge-onsite">
+                                        <Icon Name="IconName.Building" IconSize="IconSize.Small" />
+                                        @L["OnSite"]
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge-modern badge-remote">
+                                        <Icon Name="IconName.Home" IconSize="IconSize.Small" />
+                                        @L["Remote"]
+                                    </span>
+                                }
+                            </TableRowCell>
+                            <TableRowCell>
+                                @if (day.IsOnSite && !string.IsNullOrEmpty(SeatNumber))
+                                {
+                                    <strong>@SeatNumber</strong>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </TableRowCell>
+                            <TableRowCell>
+                                @if (day.IsOnSite && !string.IsNullOrEmpty(FloorNumber))
+                                {
+                                    <strong>@FloorNumber</strong>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                            </TableRowCell>
+                        </TableRow>
+                    }
+                </TableBody>
+            </Table>
+        </div>
+    }
+    else
+    {
+        <div class="alert-modern">
+            <p class="alert-modern-text mb-0">@L["NoScheduleAssigned"]</p>
+        </div>
+    }
+}
+else
+{
+    <div class="alert-modern">
+        <p class="alert-modern-text mb-0">@L["NoScheduleAssigned"]</p>
+    </div>
+}
+
+@code {
+    [Parameter] public List<ScheduleDayDto> ScheduleDays { get; set; } = new();
+    [Parameter] public string SeatNumber { get; set; }
+    [Parameter] public string FloorNumber { get; set; }
+    [Parameter] public int DaysToShow { get; set; } = 7;
+    [Parameter] public DateTime? StartDate { get; set; }
+    [Parameter] public bool ShowAllWeekDays { get; set; } = false; // If true, shows all days of week, if false shows upcoming days
+
+    private List<UpcomingScheduleDay> GetUpcomingDays()
+    {
+        var days = new List<UpcomingScheduleDay>();
+
+        if (ShowAllWeekDays)
+        {
+            // Show all days of the week in chronological order (for MySchedule page)
+            // Start from today and show the rest of the week
+            var today = DateTime.Today;
+            var todayDayOfWeek = today.DayOfWeek;
+            
+            // First, collect all schedule days with their dates
+            var scheduleDaysWithDates = new List<UpcomingScheduleDay>();
+            
+            for (int dayOfWeekInt = 0; dayOfWeekInt < 7; dayOfWeekInt++)
+            {
+                var dayOfWeek = (DayOfWeek)dayOfWeekInt;
+                var dayDef = ScheduleDays?.FirstOrDefault(d => d.DayOfWeek == dayOfWeek);
+
+                if (dayDef != null)
+                {
+                    // Find the next occurrence of this day of week (including today)
+                    var daysUntilNext = ((int)dayOfWeek - (int)todayDayOfWeek + 7) % 7;
+                    // If daysUntilNext is 0, it means today matches this day of week, so use today
+                    var date = today.AddDays(daysUntilNext);
+
+                    scheduleDaysWithDates.Add(new UpcomingScheduleDay
+                    {
+                        Date = date,
+                        IsOnSite = dayDef.IsOnSite
+                    });
+                }
+            }
+            
+            // Sort by date to show them in chronological order
+            days = scheduleDaysWithDates.OrderBy(d => d.Date).ToList();
+        }
+        else
+        {
+            // Show upcoming days (for home page)
+            var startDate = StartDate ?? DateTime.Today;
+            for (int i = 0; i < DaysToShow; i++)
+            {
+                var date = startDate.AddDays(i);
+                var dayOfWeek = date.DayOfWeek;
+                var dayDef = ScheduleDays?.FirstOrDefault(d => d.DayOfWeek == dayOfWeek);
+
+                if (dayDef != null)
+                {
+                    days.Add(new UpcomingScheduleDay
+                    {
+                        Date = date,
+                        IsOnSite = dayDef.IsOnSite
+                    });
+                }
+            }
+        }
+
+        return days;
+    }
+
+    private class UpcomingScheduleDay
+    {
+        public DateTime Date { get; set; }
+        public bool IsOnSite { get; set; }
+    }
+}
+

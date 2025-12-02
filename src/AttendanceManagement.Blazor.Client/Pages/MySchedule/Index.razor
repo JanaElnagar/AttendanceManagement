@@ -101,74 +101,11 @@
                     <h3 class="section-title">@L["DetailedView"]</h3>
                 </div>
 
-                <div class="modern-table-wrapper">
-                    <Table Class="modern-table" Margin="Margin.Is0">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHeaderCell>@L["Day"]</TableHeaderCell>
-                                <TableHeaderCell>@L["WorkLocation"]</TableHeaderCell>
-                                <TableHeaderCell>@L["SeatNumber"]</TableHeaderCell>
-                                <TableHeaderCell>@L["FloorNumber"]</TableHeaderCell>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            @foreach (var day in ScheduleDays.OrderBy(d => d.DayOfWeek))
-                            {
-                                var isToday = day.DayOfWeek == DateTime.Now.DayOfWeek;
-                                <TableRow Class="@(isToday ? "today-highlight" : "")">
-                                    <TableRowCell>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <strong>@day.DayOfWeek.ToString()</strong>
-                                            @if (isToday)
-                                            {
-                                                <span class="badge-modern badge-today">
-                                                    <Icon Name="IconName.Star" IconSize="IconSize.Small" />
-                                                    @L["Today"]
-                                                </span>
-                                            }
-                                        </div>
-                                    </TableRowCell>
-                                    <TableRowCell>
-                                        @if (day.IsOnSite)
-                                        {
-                                            <span class="badge-modern badge-onsite">
-                                                <Icon Name="IconName.Building" IconSize="IconSize.Small" />
-                                                @L["OnSite"]
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge-modern badge-remote">
-                                                <Icon Name="IconName.Home" IconSize="IconSize.Small" />
-                                                @L["Remote"]
-                                            </span>
-                                        }
-                                    </TableRowCell>
-                                    <TableRowCell>
-                                        @if (day.IsOnSite)
-                                        {
-                                            <strong>@CurrentSchedule.SeatNumber</strong>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </TableRowCell>
-                                    <TableRowCell>
-                                        @if (day.IsOnSite)
-                                        {
-                                            <strong>@CurrentSchedule.FloorNumber</strong>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </TableRowCell>
-                                </TableRow>
-                            }
-                        </TableBody>
-                    </Table>
-                </div>
+                <WeekScheduleTable 
+                    ScheduleDays="@ScheduleDays" 
+                    SeatNumber="@CurrentSchedule.SeatNumber" 
+                    FloorNumber="@CurrentSchedule.FloorNumber" 
+                    ShowAllWeekDays="true" />
             </div>
         }
         else

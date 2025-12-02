@@ -77,6 +77,11 @@ public class AttendanceManagementBlazorClientModule : AbpModule
             options.ProviderOptions.DefaultScopes.Add("roles");
             options.ProviderOptions.DefaultScopes.Add("email");
             options.ProviderOptions.DefaultScopes.Add("phone");
+            
+            // Configure post-logout redirect to logout-callback (must be absolute URI)
+            // The logout-callback page will then redirect to login
+            var baseAddress = builder.HostEnvironment.BaseAddress.TrimEnd('/');
+            options.ProviderOptions.PostLogoutRedirectUri = $"{baseAddress}/authentication/logout-callback";
         });
     }
 

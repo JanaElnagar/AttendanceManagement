@@ -1,0 +1,15 @@
+@page "/authentication/logout-callback"
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager NavigationManager
+
+@code {
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Redirect to login page after logout callback
+            NavigationManager.NavigateTo("/authentication/login", forceLoad: true);
+        }
+    }
+}
+

@@ -10,6 +10,7 @@
 @inject IUiMessageService MessageService
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
+@inject IJSRuntime JSRuntime
 @inherits AbpComponentBase
 
 <div class="modern-page-wrapper">
@@ -275,6 +276,9 @@
                             <ListGroupItem>
                                 <Icon Name="IconName.FileAlt" Margin="Margin.Is1.FromEnd" />
                                 <span>@attachment.FileName</span>
+                                <Button Color="Color.Link" Size="Size.Small" Float="Float.End" Clicked="@(() => DownloadAttachmentAsync(attachment.Id))">
+                                    <Icon Name="IconName.Download" />
+                                </Button>
                             </ListGroupItem>
                         }
                     </ListGroup>
@@ -503,5 +507,33 @@
             StateHasChanged();
         }
         catch { }
+    }
+
+    private async Task DownloadAttachmentAsync(Guid attachmentId)
+    {
+        try
+        {
+            var fileBytes = await ExceptionRequestAppService.DownloadAttachmentAsync(attachmentId);
+            
+            // Get the attachment to get the filename
+            var attachment = SelectedRequest?.Attachments?.FirstOrDefault(a => a.Id == attachmentId);
+            var fileName = attachment?.FileName ?? "attachment";
+            
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
+            
+            try
+            {
+                await MessageService.Success(L["FileDownloadedSuccessfully"] ?? "File downloaded successfully");
+            }
+            catch { }
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error downloading file: {ex.Message}");
+            }
+            catch { }
+        }
     }
 }

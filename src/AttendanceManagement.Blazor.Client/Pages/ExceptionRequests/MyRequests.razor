@@ -11,6 +11,7 @@
 @inject IUiMessageService MessageService
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
+@inject IJSRuntime JSRuntime
 @inherits AbpComponentBase
 
 <div class="modern-page-wrapper">
@@ -615,8 +616,27 @@
     {
         try
         {
-            await MessageService.Info("Download functionality to be implemented");
+            var fileBytes = await ExceptionRequestAppService.DownloadAttachmentAsync(attachmentId);
+            
+            // Get the attachment to get the filename
+            var attachment = SelectedRequest?.Attachments?.FirstOrDefault(a => a.Id == attachmentId);
+            var fileName = attachment?.FileName ?? "attachment";
+            
+            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, Convert.ToBase64String(fileBytes));
+            
+            try
+            {
+                await MessageService.Success(L["FileDownloadedSuccessfully"] ?? "File downloaded successfully");
+            }
+            catch { }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error downloading file: {ex.Message}");
+            }
+            catch { }
+        }
     }
 }

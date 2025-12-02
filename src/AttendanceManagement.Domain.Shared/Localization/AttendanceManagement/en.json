@@ -188,6 +188,7 @@
     "NoExceptionRequestsAvailable": "No exception requests available.",
     "ReviewAndApproveExceptionRequests": "Review and approve exception requests",
     "NoPendingApprovalsMessage": "All requests have been processed.",
-    "ViewYourWorkSchedule": "View your work schedule"
+    "ViewYourWorkSchedule": "View your work schedule",
+    "FileDownloadedSuccessfully": "File downloaded successfully"
   }
 }

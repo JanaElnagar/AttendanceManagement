@@ -7,16 +7,20 @@ using AttendanceManagement.Enums;
 using AttendanceManagement.Interfaces;
 using AttendanceManagement.Permissions;
 using AutoMapper.Internal.Mappers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
+using Volo.Abp.Authorization;
 using Volo.Abp.Content;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Guids;
@@ -33,6 +37,7 @@ namespace AttendanceManagement.Services
         private readonly IScheduleRepository _scheduleAssignmentRepository;
         private readonly ICurrentUser _currentUser;
         private readonly ILogger<ExceptionRequestAppService> _logger;
+        private readonly IConfiguration _configuration;
 
         public ExceptionRequestAppService(
             IExceptionRequestRepository exceptionRequestRepository,
@@ -41,7 +46,8 @@ namespace AttendanceManagement.Services
             IRepository<Workflow, Guid> workflowRepository,
             IRepository<Schedule, Guid> scheduleRepository,
             ICurrentUser currentUser,
-            ILogger<ExceptionRequestAppService> logger
+            ILogger<ExceptionRequestAppService> logger,
+            IConfiguration configuration
             )
         {
             _exceptionRequestRepository = exceptionRequestRepository;
@@ -51,6 +57,7 @@ namespace AttendanceManagement.Services
             _workflowRepository = workflowRepository;
             _currentUser = currentUser;
             _logger = logger;
+            _configuration = configuration;
         }
 
         public async Task<ExceptionRequestDto> GetAsync(Guid id)
@@ -517,15 +524,60 @@ namespace AttendanceManagement.Services
 
             // Ensure fileName is not null
             var fileName = file.FileName ?? throw new UserFriendlyException("File name cannot be null.");
-            var filePath = $"attachments/{exceptionRequestId}/{fileName}";
+            var relativePath = $"attachments/{exceptionRequestId}/{fileName}";
 
-            // TODO: Implement actual file saving logic
+            // Determine the base path for file storage
+            var currentDir = Directory.GetCurrentDirectory();
+            string basePath = null;
+            
+            // Try to find wwwroot directory
+            if (Directory.Exists(Path.Combine(currentDir, "wwwroot")))
+            {
+                basePath = Path.Combine(currentDir, "wwwroot");
+            }
+            else
+            {
+                // Try one level up (for HttpApi.Host)
+                var parentDir = Directory.GetParent(currentDir)?.FullName;
+                if (parentDir != null)
+                {
+                    var hostPath = Path.Combine(parentDir, "AttendanceManagement.HttpApi.Host", "wwwroot");
+                    if (Directory.Exists(hostPath))
+                    {
+                        basePath = hostPath;
+                    }
+                }
+            }
+
+            if (basePath == null)
+            {
+                // Fallback: create wwwroot in current directory
+                basePath = Path.Combine(currentDir, "wwwroot");
+                if (!Directory.Exists(basePath))
+                {
+                    Directory.CreateDirectory(basePath);
+                }
+            }
+
+            // Create the attachments directory structure
+            var fullPath = Path.Combine(basePath, relativePath);
+            var directory = Path.GetDirectoryName(fullPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            // Save the file
+            using (var fileStream = new FileStream(fullPath, FileMode.Create, FileAccess.Write))
+            {
+                await file.GetStream().CopyToAsync(fileStream);
+            }
 
             var attachment = new ExceptionRequestAttachment(
                 GuidGenerator.Create(),
                 exceptionRequestId,
                 fileName,
-                filePath,
+                relativePath, // Store relative path
                 file.ContentType,
                 attachmentType
             );
@@ -534,6 +586,90 @@ namespace AttendanceManagement.Services
             await _exceptionRequestRepository.UpdateAsync(request);
 
             return attachment.Id;
+        }
+
+        public async Task<byte[]> DownloadAttachmentAsync(Guid attachmentId)
+        {
+            // Get the exception request with attachments
+            var queryable = await _exceptionRequestRepository.GetQueryableAsync();
+            var request = await queryable
+                .Include(r => r.Attachments)
+                .FirstOrDefaultAsync(r => r.Attachments.Any(a => a.Id == attachmentId));
+
+            if (request == null)
+            {
+                throw new UserFriendlyException("Exception request not found.");
+            }
+
+            var attachment = request.Attachments.FirstOrDefault(a => a.Id == attachmentId);
+            if (attachment == null)
+            {
+                throw new UserFriendlyException("Attachment not found.");
+            }
+
+            // Check if user has permission to view this attachment
+            // User can view if they are the requester, or if they have approve permission
+            var canView = false;
+            var employee = await _employeeRepository.GetAsync(request.EmployeeId);
+            if (_currentUser.Id.HasValue && employee.UserId == _currentUser.Id.Value)
+            {
+                canView = true;
+            }
+
+            if (!canView)
+            {
+                canView = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.ExceptionRequests.Approve);
+            }
+
+            if (!canView)
+            {
+                throw new AbpAuthorizationException("You do not have permission to view this attachment.");
+            }
+
+            // Use the stored file path from the attachment
+            // The path is stored as relative: "attachments/{requestId}/{fileName}"
+            var relativePath = attachment.FilePath;
+            var currentDir = Directory.GetCurrentDirectory();
+            string filePath = null;
+
+            // Try multiple possible locations
+            var pathsToTry = new List<string>
+            {
+                Path.Combine(currentDir, "wwwroot", relativePath),
+                Path.Combine(currentDir, relativePath)
+            };
+
+            // Try one level up (for HttpApi.Host)
+            var parentDir = Directory.GetParent(currentDir)?.FullName;
+            if (parentDir != null)
+            {
+                pathsToTry.Add(Path.Combine(parentDir, "AttendanceManagement.HttpApi.Host", "wwwroot", relativePath));
+                pathsToTry.Add(Path.Combine(parentDir, "AttendanceManagement.Blazor", "wwwroot", relativePath));
+            }
+
+            // Try configuration path if set
+            var configPath = _configuration["App:AttachmentsPath"];
+            if (!string.IsNullOrEmpty(configPath))
+            {
+                pathsToTry.Insert(0, Path.Combine(configPath, relativePath));
+            }
+
+            foreach (var path in pathsToTry)
+            {
+                if (File.Exists(path))
+                {
+                    filePath = path;
+                    break;
+                }
+            }
+
+            if (filePath == null || !File.Exists(filePath))
+            {
+                _logger.LogWarning($"Attachment file not found. Tried paths: {string.Join(", ", pathsToTry)}. Attachment FilePath: {attachment.FilePath}");
+                throw new UserFriendlyException($"File not found on server. Path: {attachment.FilePath}");
+            }
+
+            return await File.ReadAllBytesAsync(filePath);
         }
     }
 }

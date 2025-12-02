@@ -188,6 +188,7 @@
     "NoExceptionRequestsAvailable": "لا توجد طلبات استثناء متاحة.",
     "ReviewAndApproveExceptionRequests": "مراجعة والموافقة على طلبات الاستثناء",
     "NoPendingApprovalsMessage": "تمت معالجة جميع الطلبات.",
-    "ViewYourWorkSchedule": "عرض جدول عملك"
+    "ViewYourWorkSchedule": "عرض جدول عملك",
+    "FileDownloadedSuccessfully": "تم تنزيل الملف بنجاح"
   }
 }

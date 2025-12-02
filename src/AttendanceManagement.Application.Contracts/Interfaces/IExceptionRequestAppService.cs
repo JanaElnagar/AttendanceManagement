@@ -22,5 +22,6 @@ namespace AttendanceManagement.Interfaces
         Task<List<ExceptionRequestDto>> GetPendingApprovalsAsync();
         Task CancelAsync(Guid id);
         Task<Guid> UploadAttachmentAsync(Guid exceptionRequestId, IRemoteStreamContent file, AttachmentType attachmentType);
+        Task<byte[]> DownloadAttachmentAsync(Guid attachmentId);
     }
 }

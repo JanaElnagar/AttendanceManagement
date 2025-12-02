@@ -120,7 +120,7 @@ public class AttendanceManagementMenuContributor : IMenuContributor
                 l["Menu:Schedules"],
                 url: "/schedules",
                 icon: "fa fa-calendar-alt"
-            ).RequirePermissions(AttendanceManagementPermissions.Schedules.Default)
+            ).RequirePermissions(AttendanceManagementPermissions.Schedules.Assign)
         );
 
         // Workflows Management

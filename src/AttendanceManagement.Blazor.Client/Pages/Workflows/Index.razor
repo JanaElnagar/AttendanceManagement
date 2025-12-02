@@ -39,7 +39,7 @@
                         <div class="d-flex gap-2">
                             @if (HasExportPermission && WorkflowList != null && WorkflowList.Any())
                             {
-                                <Button Class="btn-modern" Clicked="ExportToExcelAsync" Loading="@IsExporting">
+                                <Button style="color:white" Class="btn-modern" Clicked="ExportToExcelAsync" Loading="@IsExporting">
                                     <Icon Name="IconName.FileDownload" />
                                     <span>@L["ExportToExcel"]</span>
                                 </Button>

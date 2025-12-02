@@ -56,6 +56,7 @@
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 1.5rem;
     padding: 2rem;
+    margin-top: 1.5rem;
 }
 
 .modern-info-card {
@@ -115,6 +116,11 @@
     font-size: 1.5rem;
     font-weight: 700;
     color: #1e293b;
+}
+
+/* Content section spacing after gradient header */
+.glass-card > .px-4.pb-4 {
+    margin-top: 1.5rem;
 }
 
 /* Modern table styling */
@@ -199,7 +205,7 @@
     font-size: 0.938rem;
     transition: all 0.2s ease;
     box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
-    color: white;
+    color: white !important;
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
@@ -415,8 +421,4 @@
 
 .table thead th {
     color: white !important
-}
-
-.btn {
-    --bs-btn-color: #ffffff !important
 }

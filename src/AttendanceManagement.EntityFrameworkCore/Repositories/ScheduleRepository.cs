@@ -17,9 +17,9 @@ namespace AttendanceManagement.Repositories
         public async Task<ScheduleAssignment> GetScheduleAssignmentByEmployeeId(Guid id)
         {
             var query = await GetQueryableAsync();
-            return query
+            return await query
                 .Where(sa => sa.EmployeeId == id && sa.EffectiveFrom <= DateTime.UtcNow && (sa.EffectiveTo == null || sa.EffectiveTo >= DateTime.UtcNow))
-                .FirstOrDefault();
+                .FirstOrDefaultAsync();
         }
 
     }

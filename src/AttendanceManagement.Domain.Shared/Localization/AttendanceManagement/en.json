@@ -58,14 +58,11 @@
     "Floor": "Floor",
     "ViewDetails": "View Details",
     "Assign": "Assign",
-    "AssignSchedule": "Assign Schedule",
     "AssignToEmployee": "Assign to Employee",
     "AssignToGroup": "Assign to Group",
     "Employee": "Employee",
     "SelectEmployee": "Select Employee",
     "SelectGroup": "Select Group",
-    "EffectiveFrom": "Starting From",
-    "EffectiveTo": "Effective To",
     "ExportToExcel": "Export to Excel",
     "NoScheduleAssigned": "No schedule assigned to you yet.",
     "Today": "Today",
@@ -193,7 +190,6 @@
     "NoSchedulesAvailable": "No schedules available.",
     "EditSchedule": "Edit Schedule",
     "ManageEmployeeInformation": "Manage employee information",
-    "NoEmployeesAvailable": "No employees available.",
     "ManageEmployeeGroups": "Manage employee groups",
     "NoGroupsAvailable": "No groups available.",
     "EditGroup": "Edit Group",
@@ -218,6 +214,12 @@
     "EmployeeName": "Employee Name",
     "Errors": "Errors",
     "ImportSuccess": "Import Successful",
-    "ImportSuccessMessage": "All employees were imported successfully."
+    "ImportSuccessMessage": "All employees were imported successfully.",
+    
+    "Showing": "Showing",
+    "Of": "of",
+    "PageSize": "Page Size",
+    "Previous": "Previous",
+    "Next": "Next"
   }
 }

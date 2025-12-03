@@ -84,7 +84,7 @@
         {
             @* Content Section *@
             <div class="px-4 pb-4">
-                <div class="modern-table-wrapper">
+                <div class="modern-table-wrapper" style="max-height: 600px; overflow-y: auto;">
                     <Table Class="modern-table" Margin="Margin.Is0">
                         <TableHeader>
                             <TableRow>
@@ -153,6 +153,75 @@
                         </TableBody>
                     </Table>
                 </div>
+                
+                @* Pagination Controls *@
+                @if (TotalPages > 1 || TotalCount > PageSize)
+                {
+                    <div class="d-flex justify-content-between align-items-center mt-4 px-2 flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="text-muted small">
+                                @L["Showing"] @((CurrentPage - 1) * PageSize + 1) - @(Math.Min(CurrentPage * PageSize, TotalCount)) @L["Of"] @TotalCount @L["Employees"]
+                            </span>
+                            <div class="d-flex align-items-center gap-1 ms-3">
+                                <span class="text-muted small">@L["PageSize"]:</span>
+                                <Select TValue="int" SelectedValue="@PageSize" SelectedValueChanged="@OnPageSizeChanged" Style="width: 80px;">
+                                    <SelectItem Value="10">10</SelectItem>
+                                    <SelectItem Value="25">25</SelectItem>
+                                    <SelectItem Value="50">50</SelectItem>
+                                    <SelectItem Value="100">100</SelectItem>
+                                </Select>
+                            </div>
+                        </div>
+                        @if (TotalPages > 1)
+                        {
+                            <div class="d-flex align-items-center gap-2">
+                                <Button Color="Color.Primary" Size="Size.Small" Clicked="@(() => LoadPageAsync(1))" Disabled="@(CurrentPage == 1)">
+                                    <Icon Name="IconName.ChevronLeft" />
+                                </Button>
+                                <Button Color="Color.Primary" Size="Size.Small" Clicked="@(() => LoadPageAsync(CurrentPage - 1))" Disabled="@(CurrentPage == 1)">
+                                    <Icon Name="IconName.AngleLeft" />
+                                    @L["Previous"]
+                                </Button>
+                                <div class="d-flex align-items-center gap-1">
+                                    @for (int i = Math.Max(1, CurrentPage - 2); i <= Math.Min(TotalPages, CurrentPage + 2); i++)
+                                    {
+                                        var pageNum = i;
+                                        <Button Color="@(pageNum == CurrentPage ? Color.Primary : Color.Secondary)" 
+                                                Size="Size.Small" 
+                                                Clicked="@(() => LoadPageAsync(pageNum))"
+                                                Style="@(pageNum == CurrentPage ? "font-weight: bold;" : "")">
+                                            @pageNum
+                                        </Button>
+                                    }
+                                </div>
+                                <Button Color="Color.Primary" Size="Size.Small" Clicked="@(() => LoadPageAsync(CurrentPage + 1))" Disabled="@(CurrentPage >= TotalPages)">
+                                    @L["Next"]
+                                    <Icon Name="IconName.AngleRight" />
+                                </Button>
+                                <Button Color="Color.Primary" Size="Size.Small" Clicked="@(() => LoadPageAsync(TotalPages))" Disabled="@(CurrentPage >= TotalPages)">
+                                    <Icon Name="IconName.ChevronRight" />
+                                </Button>
+                            </div>
+                        }
+                    </div>
+                }
+                else if (TotalCount > 0)
+                {
+                    <div class="d-flex justify-content-between align-items-center mt-4 px-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="text-muted small">@L["Showing"] @TotalCount @L["Employees"]</span>
+                            <div class="d-flex align-items-center gap-1 ms-3">
+                                <span class="text-muted small">@L["PageSize"]:</span>
+                                <Select TValue="int" SelectedValue="@PageSize" SelectedValueChanged="@OnPageSizeChanged" Style="width: 80px;">
+                                    <SelectItem Value="10">10</SelectItem>
+                                    <SelectItem Value="25">25</SelectItem>
+                                    <SelectItem Value="50">50</SelectItem>
+                                    <SelectItem Value="100">100</SelectItem>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
+                }
             </div>
         }
         else
@@ -301,12 +370,12 @@
                 <Divider Margin="Margin.Is4.FromTop" />
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5>@L["ScheduleAssignments"]</h5>
-                    @* @if (HasScheduleAssignPermission)
+                    @if (HasScheduleAssignPermission)
                     {
                         <Button Color="Color.Primary" Size="Size.Small" Clicked="@(() => OpenAssignScheduleModal(SelectedEmployeeDetails.Id))">
                             <Icon Name="IconName.Add" /> @L["AssignSchedule"]
                         </Button>
-                    } *@
+                    }
                 </div>
                 @if (ScheduleAssignments != null && ScheduleAssignments.Any())
                 {
@@ -593,6 +662,15 @@
     private async Task LoadPageAsync(int page)
     {
         CurrentPage = page;
+        IsLoading = true;
+        await LoadEmployeesAsync();
+        IsLoading = false;
+    }
+
+    private async Task OnPageSizeChanged(int newPageSize)
+    {
+        PageSize = newPageSize;
+        CurrentPage = 1; // Reset to first page when page size changes
         IsLoading = true;
         await LoadEmployeesAsync();
         IsLoading = false;

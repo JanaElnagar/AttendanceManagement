@@ -3,12 +3,14 @@
 @using AttendanceManagement.Permissions
 @using AttendanceManagement.Dtos.Group
 @using AttendanceManagement.Dtos.Employees
+@using AttendanceManagement.Dtos.Schedules
 @using Volo.Abp.Application.Dtos
 @using Volo.Abp.AspNetCore.Components.Messages
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(AttendanceManagementPermissions.Groups.Default)]
 @inject IGroupAppService GroupAppService
 @inject IEmployeeAppService EmployeeAppService
+@inject IScheduleAppService ScheduleAppService
 @inject IUiMessageService MessageService
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
@@ -116,6 +118,9 @@
                                                     </DropdownItem>
                                                     <DropdownItem Clicked="@(() => OpenManageMembersModalAsync(group.Id))">
                                                         <Icon Name="IconName.UserPlus" /> @L["ManageMembers"]
+                                                    </DropdownItem>
+                                                    <DropdownItem Clicked="@(() => OpenAssignScheduleModalAsync(group.Id))">
+                                                        <Icon Name="IconName.Calendar" /> @L["AssignSchedule"]
                                                     </DropdownItem>
                                                     @if (group.IsActive)
                                                     {
@@ -339,6 +344,107 @@
     </ModalContent>
 </Modal>
 
+<Modal @ref="AssignScheduleModal">
+    <ModalContent Centered="true" Size="ModalSize.Large">
+        <Form>
+            <ModalHeader>
+                <ModalTitle>@L["AssignSchedule"] - @(SelectedGroupForSchedule?.Name ?? "")</ModalTitle>
+                <CloseButton Clicked="CloseAssignScheduleModalAsync" />
+            </ModalHeader>
+            <ModalBody>
+                @if (EditingScheduleAssignment != null)
+                {
+                    <Field>
+                        <FieldLabel>@L["Schedule"] *</FieldLabel>
+                        <Select TValue="Guid" @bind-SelectedValue="@EditingScheduleAssignment.ScheduleId">
+                            <SelectItem Value="@Guid.Empty">-- @L["Select"] --</SelectItem>
+                            @if (Schedules != null)
+                            {
+                                @foreach (var schedule in Schedules)
+                                {
+                                    <SelectItem Value="@schedule.Id">@schedule.Name</SelectItem>
+                                }
+                            }
+                        </Select>
+                    </Field>
+                    <Field>
+                        <FieldLabel>@L["EffectiveFrom"] *</FieldLabel>
+                        <TextEdit Type="date" @bind-Text="@EffectiveFromString" />
+                    </Field>
+                    <Field>
+                        <FieldLabel>@L["EffectiveTo"]</FieldLabel>
+                        <TextEdit Type="date" @bind-Text="@EffectiveToString" />
+                    </Field>
+                    @if (IsLoadingEmployeesForSchedule)
+                    {
+                        <div class="text-center py-4">
+                            <div class="modern-spinner mx-auto mb-3"></div>
+                            <p class="text-muted">@L["Loading"]</p>
+                        </div>
+                    }
+                    else if (GroupEmployeesForSchedule != null && GroupEmployeesForSchedule.Any())
+                    {
+                        <Divider Margin="Margin.Is3.FromTop" />
+                        <Field>
+                            <FieldLabel>@L["EmployeeAssignments"]</FieldLabel>
+                            <FieldHelp>@L["SetSeatAndFloorForEachEmployee"]</FieldHelp>
+                            <div class="border rounded p-3" style="max-height: 400px; overflow-y: auto;">
+                                <Table Striped="true" Margin="Margin.Is0">
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHeaderCell>@L["Name"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["Department"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["SeatNumber"]</TableHeaderCell>
+                                            <TableHeaderCell>@L["FloorNumber"]</TableHeaderCell>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        @foreach (var employee in GroupEmployeesForSchedule)
+                                        {
+                                            var assignment = EditingScheduleAssignment?.EmployeeAssignments?.FirstOrDefault(ea => ea.EmployeeId == employee.Id);
+                                            <TableRow>
+                                                <TableRowCell>
+                                                    <strong>@employee.Name</strong>
+                                                </TableRowCell>
+                                                <TableRowCell>@employee.Department</TableRowCell>
+                                                <TableRowCell>
+                                                    <TextEdit Value="@(assignment?.SeatNumber ?? string.Empty)" 
+                                                              ValueChanged="@((string value) => UpdateEmployeeSeatNumber(employee.Id, value))" 
+                                                              Placeholder="Enter seat number" Size="Size.Small" />
+                                                </TableRowCell>
+                                                <TableRowCell>
+                                                    <TextEdit Value="@(assignment?.FloorNumber ?? string.Empty)" 
+                                                              ValueChanged="@((string value) => UpdateEmployeeFloorNumber(employee.Id, value))" 
+                                                              Placeholder="Enter floor number" Size="Size.Small" />
+                                                </TableRowCell>
+                                            </TableRow>
+                                        }
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </Field>
+                    }
+                    @if (SelectedGroupForSchedule != null)
+                    {
+                        <Alert Color="Color.Info" Visible="true" Margin="Margin.Is3.FromTop">
+                            <AlertDescription>
+                                @L["ThisScheduleWillBeAssignedToAllActiveMembers"]: <strong>@SelectedGroupForSchedule.Name</strong>
+                            </AlertDescription>
+                        </Alert>
+                    }
+                }
+            </ModalBody>
+            <ModalFooter>
+                <Button Color="Color.Secondary" Clicked="CloseAssignScheduleModalAsync">@L["Cancel"]</Button>
+                <Button Color="Color.Primary" Clicked="SaveScheduleAssignmentAsync" Loading="@IsSavingSchedule" Disabled="@(EditingScheduleAssignment == null || EditingScheduleAssignment.ScheduleId == Guid.Empty)">
+                    <Icon Name="IconName.Save" />
+                    @L["AssignSchedule"]
+                </Button>
+            </ModalFooter>
+        </Form>
+    </ModalContent>
+</Modal>
+
 @code {
     private List<GroupDto> GroupList { get; set; }
     private bool IsLoading { get; set; } = true;
@@ -347,17 +453,27 @@
     private Modal GroupModal { get; set; }
     private Modal DetailsModal { get; set; }
     private Modal ManageMembersModal { get; set; }
+    private Modal AssignScheduleModal { get; set; }
 
     private CreateUpdateGroupDto EditingGroup { get; set; }
     private Guid? EditingGroupId { get; set; }
     private GroupWithEmployeesDto SelectedGroupDetails { get; set; }
     private GroupDto SelectedGroupForMembers { get; set; }
+    private GroupDto SelectedGroupForSchedule { get; set; }
     private string ModalTitle { get; set; }
     
     private List<EmployeeDto> AvailableEmployees { get; set; } = new();
     private List<Guid> SelectedEmployeeIds { get; set; } = new();
     private bool IsLoadingMembers { get; set; }
     private bool IsSavingMembers { get; set; }
+
+    private List<ScheduleDto> Schedules { get; set; } = new();
+    private List<EmployeeDto> GroupEmployeesForSchedule { get; set; } = new();
+    private AssignScheduleToGroupMembersDto EditingScheduleAssignment { get; set; }
+    private string EffectiveFromString { get; set; }
+    private string EffectiveToString { get; set; }
+    private bool IsSavingSchedule { get; set; }
+    private bool IsLoadingEmployeesForSchedule { get; set; }
 
     private bool HasCreatePermission { get; set; }
     private bool HasUpdatePermission { get; set; }
@@ -785,6 +901,211 @@
         finally
         {
             IsExporting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadSchedulesAsync()
+    {
+        try
+        {
+            Schedules = await ScheduleAppService.GetActiveSchedulesAsync();
+        }
+        catch (Exception ex)
+        {
+            Schedules = new List<ScheduleDto>();
+            try
+            {
+                await MessageService.Error($"Error loading schedules: {ex.Message}");
+            }
+            catch { }
+        }
+    }
+
+    private async Task OpenAssignScheduleModalAsync(Guid groupId)
+    {
+        try
+        {
+            SelectedGroupForSchedule = GroupList?.FirstOrDefault(g => g.Id == groupId);
+            
+            if (Schedules == null || !Schedules.Any())
+            {
+                await LoadSchedulesAsync();
+            }
+
+            // Load employees in the group
+            IsLoadingEmployeesForSchedule = true;
+            StateHasChanged();
+
+            var groupWithEmployees = await GroupAppService.GetWithEmployeesAsync(groupId);
+            GroupEmployeesForSchedule = groupWithEmployees?.Employees?.Where(e => e.IsActive).ToList() ?? new List<EmployeeDto>();
+
+            // Initialize employee assignments
+            EditingScheduleAssignment = new AssignScheduleToGroupMembersDto
+            {
+                GroupId = groupId,
+                EffectiveFrom = DateTime.UtcNow.Date,
+                EmployeeAssignments = GroupEmployeesForSchedule.Select(e => new EmployeeScheduleAssignmentDto
+                {
+                    EmployeeId = e.Id,
+                    EmployeeName = e.Name,
+                    SeatNumber = string.Empty,
+                    FloorNumber = string.Empty
+                }).ToList()
+            };
+            EffectiveFromString = DateTime.UtcNow.Date.ToString("yyyy-MM-dd");
+            EffectiveToString = string.Empty;
+
+            IsLoadingEmployeesForSchedule = false;
+            if (AssignScheduleModal != null)
+            {
+                await AssignScheduleModal.Show();
+            }
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            IsLoadingEmployeesForSchedule = false;
+            try
+            {
+                await MessageService.Error($"Error opening assign schedule modal: {ex.Message}");
+            }
+            catch { }
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateEmployeeSeatNumber(Guid employeeId, string seatNumber)
+    {
+        if (EditingScheduleAssignment?.EmployeeAssignments == null) return;
+        
+        var assignment = EditingScheduleAssignment.EmployeeAssignments.FirstOrDefault(ea => ea.EmployeeId == employeeId);
+        if (assignment != null)
+        {
+            assignment.SeatNumber = seatNumber;
+        }
+        else
+        {
+            var employee = GroupEmployeesForSchedule.FirstOrDefault(e => e.Id == employeeId);
+            if (employee != null)
+            {
+                EditingScheduleAssignment.EmployeeAssignments.Add(new EmployeeScheduleAssignmentDto
+                {
+                    EmployeeId = employeeId,
+                    EmployeeName = employee.Name,
+                    SeatNumber = seatNumber,
+                    FloorNumber = string.Empty
+                });
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void UpdateEmployeeFloorNumber(Guid employeeId, string floorNumber)
+    {
+        if (EditingScheduleAssignment?.EmployeeAssignments == null) return;
+        
+        var assignment = EditingScheduleAssignment.EmployeeAssignments.FirstOrDefault(ea => ea.EmployeeId == employeeId);
+        if (assignment != null)
+        {
+            assignment.FloorNumber = floorNumber;
+        }
+        else
+        {
+            var employee = GroupEmployeesForSchedule.FirstOrDefault(e => e.Id == employeeId);
+            if (employee != null)
+            {
+                EditingScheduleAssignment.EmployeeAssignments.Add(new EmployeeScheduleAssignmentDto
+                {
+                    EmployeeId = employeeId,
+                    EmployeeName = employee.Name,
+                    SeatNumber = string.Empty,
+                    FloorNumber = floorNumber
+                });
+            }
+        }
+        StateHasChanged();
+    }
+
+    private async Task CloseAssignScheduleModalAsync()
+    {
+        try
+        {
+            if (AssignScheduleModal != null)
+            {
+                await AssignScheduleModal.Hide();
+            }
+            EditingScheduleAssignment = null;
+            SelectedGroupForSchedule = null;
+            GroupEmployeesForSchedule = new List<EmployeeDto>();
+            EffectiveFromString = string.Empty;
+            EffectiveToString = string.Empty;
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task SaveScheduleAssignmentAsync()
+    {
+        try
+        {
+            if (EditingScheduleAssignment == null)
+            {
+                await MessageService.Error("Schedule assignment data is missing.");
+                return;
+            }
+
+            if (EditingScheduleAssignment.ScheduleId == Guid.Empty)
+            {
+                await MessageService.Error("Please select a schedule.");
+                return;
+            }
+
+            if (string.IsNullOrEmpty(EffectiveFromString) || !DateTime.TryParse(EffectiveFromString, out var effectiveFrom))
+            {
+                await MessageService.Error("Please enter a valid effective from date.");
+                return;
+            }
+
+            EditingScheduleAssignment.EffectiveFrom = effectiveFrom;
+
+            if (!string.IsNullOrEmpty(EffectiveToString))
+            {
+                if (DateTime.TryParse(EffectiveToString, out var effectiveTo))
+                {
+                    EditingScheduleAssignment.EffectiveTo = effectiveTo;
+                }
+                else
+                {
+                    await MessageService.Error("Please enter a valid effective to date.");
+                    return;
+                }
+            }
+            else
+            {
+                EditingScheduleAssignment.EffectiveTo = null;
+            }
+
+            IsSavingSchedule = true;
+            StateHasChanged();
+
+            await ScheduleAppService.AssignScheduleToGroupMembersAsync(EditingScheduleAssignment);
+
+            await CloseAssignScheduleModalAsync();
+            await LoadGroupsAsync();
+            await MessageService.Success(L["ScheduleAssignedSuccessfully"]);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await MessageService.Error($"Error: {ex.Message}");
+            }
+            catch { }
+        }
+        finally
+        {
+            IsSavingSchedule = false;
             StateHasChanged();
         }
     }

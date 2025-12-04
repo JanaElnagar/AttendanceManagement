@@ -132,6 +132,8 @@
     "SelectAll": "Select All",
     "DeselectAll": "Deselect All",
     "NoEmployeesAvailable": "No employees available.",
+    "EmployeeAssignments": "Employee Assignments",
+    "SetSeatAndFloorForEachEmployee": "Set seat and floor number for each employee (optional)",
 
     "PrimaryManager": "Primary Manager",
     "CurrentSchedule": "Current Schedule",
@@ -172,6 +174,7 @@
     "Ongoing": "Ongoing",
     "EndAssignment": "End Assignment",
     "ScheduleAssignedSuccessfully": "Schedule assigned successfully.",
+    "ThisScheduleWillBeAssignedToAllActiveMembers": "This schedule will be assigned to all active members in group",
     "ScheduleAssignmentUpdatedSuccessfully": "Schedule assignment updated successfully.",
     "ScheduleAssignmentEndedSuccessfully": "Schedule assignment ended successfully.",
     "EndScheduleAssignmentConfirmation": "Are you sure you want to end this schedule assignment?",

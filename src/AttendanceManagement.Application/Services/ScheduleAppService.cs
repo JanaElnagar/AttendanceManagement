@@ -175,6 +175,68 @@ namespace AttendanceManagement.Services
             await Repository.UpdateAsync(schedule);
         }
 
+        public async Task AssignScheduleToGroupMembersAsync(AssignScheduleToGroupMembersDto input)
+        {
+            await CheckPolicyAsync(AttendanceManagementPermissions.Schedules.Assign);
+
+            // Validate ScheduleId exists
+            var schedule = await Repository.GetAsync(input.ScheduleId);
+
+            // Validate GroupId exists
+            var group = await _groupRepository.GetAsync(input.GroupId);
+
+            // Validate date range
+            if (input.EffectiveTo.HasValue && input.EffectiveTo.Value <= input.EffectiveFrom)
+            {
+                throw new UserFriendlyException("Effective to date must be after effective from date.");
+            }
+
+            // Get all active employees in the group
+            var employees = await _employeeRepository.GetListAsync(e => e.GroupId == input.GroupId && e.IsActive);
+
+            if (!employees.Any())
+            {
+                throw new UserFriendlyException("No active employees found in this group.");
+            }
+
+            // Assign schedule to each employee
+            foreach (var employee in employees)
+            {
+                // End any existing active assignment for this employee
+                var existingActiveAssignment = await GetEmployeeCurrentScheduleAssignmentEntityAsync(employee.Id);
+                if (existingActiveAssignment != null)
+                {
+                    existingActiveAssignment.EffectiveTo = input.EffectiveFrom.AddDays(-1);
+                    await _scheduleRepository.UpdateAsync(existingActiveAssignment);
+                }
+
+                // Get per-employee seat and floor number from assignments
+                var employeeAssignment = input.EmployeeAssignments?.FirstOrDefault(ea => ea.EmployeeId == employee.Id);
+                var seatNumber = !string.IsNullOrWhiteSpace(employeeAssignment?.SeatNumber) ? employeeAssignment.SeatNumber : null;
+                var floorNumber = !string.IsNullOrWhiteSpace(employeeAssignment?.FloorNumber) ? employeeAssignment.FloorNumber : null;
+
+                // Create new assignment for this employee
+                var assignment = new ScheduleAssignment(
+                    GuidGenerator.Create(),
+                    input.ScheduleId,
+                    input.EffectiveFrom,
+                    employee.Id,
+                    null // Not a group-level assignment, individual employee assignment
+                )
+                {
+                    SeatNumber = seatNumber,
+                    FloorNumber = floorNumber,
+                    EffectiveTo = input.EffectiveTo
+                };
+
+                schedule.ScheduleAssignments.Add(assignment);
+                employee.ScheduleAssignments.Add(assignment);
+                await _employeeRepository.UpdateAsync(employee);
+            }
+
+            await Repository.UpdateAsync(schedule);
+        }
+
         private async Task<ScheduleAssignment> GetEmployeeCurrentScheduleAssignmentEntityAsync(Guid employeeId)
         {
             var queryable = await _scheduleRepository.GetQueryableAsync();

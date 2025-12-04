@@ -135,6 +135,8 @@
     "SelectAll": "تحديد الكل",
     "DeselectAll": "إلغاء تحديد الكل",
     "NoEmployeesAvailable": "لا يوجد موظفون متاحون.",
+    "EmployeeAssignments": "تعيينات الموظفين",
+    "SetSeatAndFloorForEachEmployee": "تعيين رقم المقعد والطابق لكل موظف (اختياري)",
 
     "PrimaryManager": "المدير الأساسي",
     "CurrentSchedule": "الجدول الحالي",
@@ -175,6 +177,7 @@
     "Ongoing": "مستمر",
     "EndAssignment": "إنهاء التعيين",
     "ScheduleAssignedSuccessfully": "تم تعيين الجدول بنجاح.",
+    "ThisScheduleWillBeAssignedToAllActiveMembers": "سيتم تعيين هذا الجدول لجميع الأعضاء النشطين في المجموعة",
     "ScheduleAssignmentUpdatedSuccessfully": "تم تحديث تعيين الجدول بنجاح.",
     "ScheduleAssignmentEndedSuccessfully": "تم إنهاء تعيين الجدول بنجاح.",
     "EndScheduleAssignmentConfirmation": "هل أنت متأكد من إنهاء تعيين الجدول هذا؟",

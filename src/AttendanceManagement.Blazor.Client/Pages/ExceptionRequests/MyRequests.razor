@@ -3,6 +3,7 @@
 @using AttendanceManagement.Interfaces
 @using AttendanceManagement.Permissions
 @using AttendanceManagement.Enums
+@using Microsoft.Extensions.Logging
 @using Volo.Abp.AspNetCore.Components.Messages
 @using Volo.Abp.Content
 @using Microsoft.AspNetCore.Authorization
@@ -12,6 +13,7 @@
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
 @inject IJSRuntime JSRuntime
+@inject ILogger<MyRequests> Logger
 @inherits AbpComponentBase
 
 <div class="modern-page-wrapper">
@@ -497,7 +499,10 @@
                 {
                     await MessageService.Error("Request data is missing.");
                 }
-                catch { }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message: Request data is missing");
+                }
                 return;
             }
 
@@ -524,8 +529,9 @@
                         NewRequest.Type == ExceptionRequestType.Sick ? AttachmentType.MedicalDocument : AttachmentType.SupportingDocument
                     );
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Logger.LogWarning(ex, "Error uploading attachment for exception request");
                     // Ignore attachment upload errors
                 }
             }
@@ -536,7 +542,10 @@
             {
                 await MessageService.Success(L["RequestSubmittedSuccessfully"]);
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying success message after submitting request");
+            }
         }
         catch (Exception ex)
         {
@@ -544,7 +553,10 @@
             {
                 await MessageService.Error(ex.Message);
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while submitting request");
+            }
         }
         finally
         {
@@ -570,7 +582,10 @@
             {
                 await MessageService.Error($"Error loading details: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while loading request details");
+            }
         }
     }
 
@@ -584,7 +599,10 @@
             }
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error closing details modal");
+        }
     }
 
     private async Task CancelRequestAsync(Guid id)
@@ -599,7 +617,10 @@
                 {
                     await MessageService.Success(L["RequestCancelledSuccessfully"]);
                 }
-                catch { }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying success message after cancelling request");
+                }
             }
         }
         catch (Exception ex)
@@ -608,7 +629,10 @@
             {
                 await MessageService.Error($"Error cancelling request: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while cancelling request");
+            }
         }
     }
 
@@ -628,7 +652,10 @@
             {
                 await MessageService.Success(L["FileDownloadedSuccessfully"] ?? "File downloaded successfully");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying success message after downloading file");
+            }
         }
         catch (Exception ex)
         {
@@ -636,7 +663,10 @@
             {
                 await MessageService.Error($"Error downloading file: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while downloading file");
+            }
         }
     }
 }

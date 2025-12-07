@@ -3,6 +3,7 @@
 @using AttendanceManagement.Interfaces
 @using AttendanceManagement.Permissions
 @using AttendanceManagement.Enums
+@using Microsoft.Extensions.Logging
 @using Volo.Abp.AspNetCore.Components.Messages
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(AttendanceManagementPermissions.ExceptionRequests.Approve)]
@@ -11,6 +12,7 @@
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
 @inject IJSRuntime JSRuntime
+@inject ILogger<PendingApprovals> Logger
 @inherits AbpComponentBase
 
 <div class="modern-page-wrapper">
@@ -412,7 +414,10 @@
             {
                 await MessageService.Error($"Error opening modal: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while opening approval modal");
+            }
         }
     }
 
@@ -426,7 +431,10 @@
             }
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error closing approval modal");
+        }
     }
 
     private async Task SubmitApprovalAsync()
@@ -439,7 +447,10 @@
                 {
                     await MessageService.Error("Approval data is missing.");
                 }
-                catch { }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message: Approval data is missing");
+                }
                 return;
             }
 
@@ -458,7 +469,10 @@
                         : L["RequestRejectedSuccessfully"]
                 );
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying success message after submitting approval");
+            }
         }
         catch (Exception ex)
         {
@@ -466,7 +480,10 @@
             {
                 await MessageService.Error(ex.Message);
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while submitting approval");
+            }
         }
         finally
         {
@@ -492,7 +509,10 @@
             {
                 await MessageService.Error($"Error loading details: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while loading request details");
+            }
         }
     }
 
@@ -506,7 +526,10 @@
             }
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error closing details modal");
+        }
     }
 
     private async Task DownloadAttachmentAsync(Guid attachmentId)
@@ -525,7 +548,10 @@
             {
                 await MessageService.Success(L["FileDownloadedSuccessfully"] ?? "File downloaded successfully");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying success message after downloading file");
+            }
         }
         catch (Exception ex)
         {
@@ -533,7 +559,10 @@
             {
                 await MessageService.Error($"Error downloading file: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while downloading file");
+            }
         }
     }
 }

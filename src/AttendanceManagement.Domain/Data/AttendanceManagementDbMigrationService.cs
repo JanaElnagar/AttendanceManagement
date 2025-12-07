@@ -115,8 +115,9 @@ public class AttendanceManagementDbMigrationService : ITransientDependency
                 return false;
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Logger.LogWarning(ex, "Error checking if database migrations project exists");
             return false;
         }
 
@@ -178,9 +179,10 @@ public class AttendanceManagementDbMigrationService : ITransientDependency
         {
             Process.Start(procStartInfo);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            throw new Exception("Couldn't run ABP CLI...");
+            Logger.LogError(ex, "Failed to run ABP CLI to create initial migration");
+            throw new Exception("Couldn't run ABP CLI...", ex);
         }
     }
 

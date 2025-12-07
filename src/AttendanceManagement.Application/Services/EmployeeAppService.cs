@@ -737,8 +737,9 @@ namespace AttendanceManagement.Services
                 var regex = new Regex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$", RegexOptions.IgnoreCase);
                 return regex.IsMatch(email);
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogWarning(ex, "Error validating email format for email: {Email}", email);
                 return false;
             }
         }

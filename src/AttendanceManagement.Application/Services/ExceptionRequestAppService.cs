@@ -272,8 +272,9 @@ namespace AttendanceManagement.Services
                     isAuthorized = true;
                     // For doctor, we don't need ApproverEmployeeId - any doctor with permission can approve
                 }
-                catch
+                catch (Exception ex)
                 {
+                    _logger.LogDebug(ex, "User {UserId} does not have ApproveAsDoctor permission for exception request {RequestId}", _currentUser.Id, input.ExceptionRequestId);
                     isAuthorized = false;
                 }
             }
@@ -391,8 +392,9 @@ namespace AttendanceManagement.Services
                 await CheckPolicyAsync(AttendanceManagementPermissions.ExceptionRequests.ViewAll);
                 canViewAll = true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogDebug(ex, "User {UserId} does not have ViewAll permission for exception requests", _currentUser.Id);
                 // User doesn't have ViewAll permission
                 canViewAll = false;
             }
@@ -416,10 +418,10 @@ namespace AttendanceManagement.Services
                 canApproveAsDoctor = true;
                 _logger.LogDebug($"User {_currentUser.Id} has ApproveAsDoctor permission");
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogDebug(ex, "User {UserId} does NOT have ApproveAsDoctor permission", _currentUser.Id);
                 canApproveAsDoctor = false;
-                _logger.LogDebug($"User {_currentUser.Id} does NOT have ApproveAsDoctor permission");
             }
 
             // Filter requests where current user can approve

@@ -4,6 +4,7 @@
 @using AttendanceManagement.Dtos.Group
 @using AttendanceManagement.Dtos.Employees
 @using AttendanceManagement.Dtos.Schedules
+@using Microsoft.Extensions.Logging
 @using Volo.Abp.Application.Dtos
 @using Volo.Abp.AspNetCore.Components.Messages
 @using Microsoft.AspNetCore.Authorization
@@ -15,6 +16,7 @@
 @inject IAuthorizationService AuthorizationService
 @inject IStringLocalizer<AttendanceManagementResource> L
 @inject IJSRuntime JSRuntime
+@inject ILogger<Index> Logger
 @inherits AbpComponentBase
 
 <div class="modern-page-wrapper">
@@ -487,14 +489,17 @@
             await SetPermissionsAsync();
             await LoadGroupsAsync();
         }
-        catch (Exception ex)
-        {
-            try
+            catch (Exception ex)
             {
-                await MessageService.Error($"Error initializing: {ex.Message}");
+                try
+                {
+                    await MessageService.Error($"Error initializing: {ex.Message}");
+                }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message during initialization");
+                }
             }
-            catch { }
-        }
         finally
         {
             IsLoading = false;
@@ -509,8 +514,9 @@
             HasUpdatePermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Groups.Edit);
             HasExportPermission = await AuthorizationService.IsGrantedAsync(AttendanceManagementPermissions.Groups.Export);
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogWarning(ex, "Error setting permissions for groups page");
             HasCreatePermission = false;
             HasUpdatePermission = false;
             HasExportPermission = false;
@@ -533,15 +539,18 @@
             var result = await GroupAppService.GetListAsync(input);
             GroupList = result.Items.ToList();
         }
-        catch (Exception ex)
-        {
-            try
+            catch (Exception ex)
             {
-                await MessageService.Error($"Error loading groups: {ex.Message}");
+                try
+                {
+                    await MessageService.Error($"Error loading groups: {ex.Message}");
+                }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message while loading groups");
+                }
+                GroupList = new List<GroupDto>();
             }
-            catch { }
-            GroupList = new List<GroupDto>();
-        }
         finally
         {
             IsLoading = false;
@@ -562,14 +571,17 @@
             }
             StateHasChanged();
         }
-        catch (Exception ex)
-        {
-            try
+            catch (Exception ex)
             {
-                await MessageService.Error($"Error opening create modal: {ex.Message}");
+                try
+                {
+                    await MessageService.Error($"Error opening create modal: {ex.Message}");
+                }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message while opening create modal");
+                }
             }
-            catch { }
-        }
     }
 
     private async Task OpenEditModalAsync(Guid id)
@@ -590,14 +602,17 @@
             }
             StateHasChanged();
         }
-        catch (Exception ex)
-        {
-            try
+            catch (Exception ex)
             {
-                await MessageService.Error($"Error loading group: {ex.Message}");
+                try
+                {
+                    await MessageService.Error($"Error loading group: {ex.Message}");
+                }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message while loading group");
+                }
             }
-            catch { }
-        }
     }
 
     private async Task OpenDetailsModalAsync(Guid id)
@@ -611,14 +626,17 @@
             }
             StateHasChanged();
         }
-        catch (Exception ex)
-        {
-            try
+            catch (Exception ex)
             {
-                await MessageService.Error($"Error loading details: {ex.Message}");
+                try
+                {
+                    await MessageService.Error($"Error loading details: {ex.Message}");
+                }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message while loading group details");
+                }
             }
-            catch { }
-        }
     }
 
     private async Task CloseGroupModalAsync()
@@ -631,7 +649,10 @@
             }
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error closing group modal");
+        }
     }
 
     private async Task CloseDetailsModalAsync()
@@ -644,7 +665,10 @@
             }
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error closing details modal");
+        }
     }
 
     private async Task SaveGroupAsync()
@@ -657,7 +681,10 @@
                 {
                     await MessageService.Error("Group data is missing.");
                 }
-                catch { }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message: Group data is missing");
+                }
                 return;
             }
 
@@ -679,7 +706,10 @@
             {
                 await MessageService.Success(L["SuccessfullySaved"]);
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying success message after saving group");
+            }
         }
         catch (Exception ex)
         {
@@ -687,7 +717,10 @@
             {
                 await MessageService.Error($"Error saving: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while saving group");
+            }
         }
         finally
         {
@@ -708,7 +741,10 @@
                 {
                     await MessageService.Success(L["SuccessfullyActivated"]);
                 }
-                catch { }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying success message after activating group");
+                }
             }
         }
         catch (Exception ex)
@@ -717,7 +753,10 @@
             {
                 await MessageService.Error($"Error: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while activating group");
+            }
         }
     }
 
@@ -733,7 +772,10 @@
                 {
                     await MessageService.Success(L["SuccessfullyDeactivated"]);
                 }
-                catch { }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying success message after deactivating group");
+                }
             }
         }
         catch (Exception ex)
@@ -742,7 +784,10 @@
             {
                 await MessageService.Error($"Error: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while deactivating group");
+            }
         }
     }
 
@@ -764,14 +809,17 @@
                 await ManageMembersModal.Show();
             }
         }
-        catch (Exception ex)
-        {
-            try
+            catch (Exception ex)
             {
-                await MessageService.Error($"Error loading employees: {ex.Message}");
+                try
+                {
+                    await MessageService.Error($"Error loading employees: {ex.Message}");
+                }
+                catch (Exception innerEx)
+                {
+                    Logger.LogError(innerEx, "Error displaying error message while loading employees for group members");
+                }
             }
-            catch { }
-        }
         finally
         {
             IsLoadingMembers = false;
@@ -791,7 +839,10 @@
             SelectedGroupForMembers = null;
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error closing manage members modal");
+        }
     }
 
     private bool IsEmployeeSelected(Guid employeeId)
@@ -868,7 +919,10 @@
             {
                 await MessageService.Error($"Error: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while saving bulk assignment");
+            }
         }
         finally
         {
@@ -896,7 +950,10 @@
             {
                 await MessageService.Error(L["ExportError"] + ": " + ex.Message);
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while exporting groups");
+            }
         }
         finally
         {
@@ -918,7 +975,10 @@
             {
                 await MessageService.Error($"Error loading schedules: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while loading schedules");
+            }
         }
     }
 
@@ -970,7 +1030,10 @@
             {
                 await MessageService.Error($"Error opening assign schedule modal: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while opening assign schedule modal");
+            }
             StateHasChanged();
         }
     }
@@ -1042,7 +1105,10 @@
             EffectiveToString = string.Empty;
             StateHasChanged();
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Error closing assign schedule modal");
+        }
     }
 
     private async Task SaveScheduleAssignmentAsync()
@@ -1101,7 +1167,10 @@
             {
                 await MessageService.Error($"Error: {ex.Message}");
             }
-            catch { }
+            catch (Exception innerEx)
+            {
+                Logger.LogError(innerEx, "Error displaying error message while saving schedule assignment");
+            }
         }
         finally
         {

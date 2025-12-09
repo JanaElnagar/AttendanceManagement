@@ -739,7 +739,7 @@ namespace AttendanceManagement.Services
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Error validating email format for email: {Email}", email);
+                _logger.LogWarning(ex, "Error validating email format.");
                 return false;
             }
         }
